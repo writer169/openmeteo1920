@@ -137,13 +137,14 @@ export default function WeatherPage() {
         <style jsx>{`
           .loading {
             min-height: 100vh;
-            background: linear-gradient(to bottom right, #60a5fa, #2563eb);
+            background: #e5e7eb;
+            border-radius: 1rem;
             display: flex;
             align-items: center;
             justify-content: center;
           }
           .loading-text {
-            color: white;
+            color: #1f2937;
             font-size: 1.25rem;
             font-family: 'Inter', sans-serif;
             display: flex;
@@ -152,7 +153,7 @@ export default function WeatherPage() {
           .spinner {
             width: 1.25rem;
             height: 1.25rem;
-            border: 2px solid white;
+            border: 2px solid #1f2937;
             border-top-color: transparent;
             border-radius: 50%;
             animation: spin 1s linear infinite;
@@ -177,6 +178,7 @@ export default function WeatherPage() {
           .error {
             min-height: 100vh;
             background: #fee2e2;
+            border-radius: 1rem;
             display: flex;
             align-items: center;
             justify-content: center;
@@ -203,7 +205,7 @@ export default function WeatherPage() {
         <link rel="preconnect" href="https://fonts.googleapis.com" />
         <link rel="preconnect" href="https://fonts.gstatic.com" crossOrigin="anonymous" />
         <link
-          href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&family=Poppins:wght@500;700&display=swap"
+          href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&family=Poppins:wght@500;700&family=Playfair+Display:wght@700&display=swap"
           rel="stylesheet"
         />
       </Head>
@@ -212,7 +214,8 @@ export default function WeatherPage() {
         <style jsx>{`
           .container {
             min-height: 100vh;
-            background: linear-gradient(to bottom right, #3b82f6, #1e40af);
+            background: #e5e7eb;
+            border-radius: 1rem;
             padding: 1rem;
             display: flex;
             flex-direction: column;
@@ -225,12 +228,13 @@ export default function WeatherPage() {
             flex-direction: column;
           }
           .title {
-            font-size: 1.5rem;
-            font-weight: 600;
-            color: white;
+            font-size: 1.75rem;
+            font-weight: 700;
+            color: #1f2937;
             text-align: center;
             margin-bottom: 1.5rem;
-            font-family: 'Inter', sans-serif;
+            font-family: 'Playfair Display', serif;
+            text-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
           }
           .card {
             background: rgba(255, 255, 255, 0.95);
@@ -239,7 +243,6 @@ export default function WeatherPage() {
             padding: 1.25rem;
             box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
             margin-bottom: 1rem;
-            position: relative;
             cursor: pointer;
             transition: transform 0.2s;
           }
@@ -251,19 +254,16 @@ export default function WeatherPage() {
             font-weight: 700;
             color: #d1d5db;
             text-transform: uppercase;
-            position: absolute;
-            left: -2.5rem;
-            top: 50%;
-            transform: rotate(-90deg) translateY(-50%);
-            transform-origin: center;
+            text-align: center;
+            margin-bottom: 0.75rem;
             font-family: 'Inter', sans-serif;
+            text-shadow: 0 1px 2px rgba(0, 0, 0, 0.1);
           }
           .card-content {
             text-align: center;
-            padding-left: 1.5rem;
           }
           .card-content .temp {
-            font-size: clamp(1.5rem, 5vw, 2rem);
+            font-size: clamp(2rem, 6vw, 2.5rem);
             font-weight: 700;
             color: #f97316;
             font-family: 'Poppins', sans-serif;
@@ -273,6 +273,7 @@ export default function WeatherPage() {
             justify-content: center;
             gap: 0.5rem;
             white-space: nowrap;
+            text-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
           }
           .card-content p {
             color: #4b5563;
@@ -323,18 +324,22 @@ export default function WeatherPage() {
             margin-top: 1.5rem;
           }
           .button {
-            background: rgba(255, 255, 255, 0.3);
+            background: #f97316;
             color: white;
-            font-weight: 500;
-            padding: 0.5rem 1.5rem;
-            border-radius: 1.5rem;
+            font-size: 1.25rem;
+            width: 2.5rem;
+            height: 2.5rem;
+            border-radius: 50%;
             border: none;
             cursor: pointer;
             transition: background 0.2s, transform 0.1s;
-            font-family: 'Inter', sans-serif;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            box-shadow: 0 2px 6px rgba(0, 0, 0, 0.2);
           }
           .button:hover {
-            background: rgba(255, 255, 255, 0.4);
+            background: #ea580c;
           }
           .button:active {
             transform: scale(0.95);
@@ -344,17 +349,16 @@ export default function WeatherPage() {
               max-width: 100%;
             }
             .title {
-              font-size: 1.25rem;
+              font-size: 1.5rem;
             }
             .card-content .temp {
-              font-size: clamp(1.25rem, 4.5vw, 1.75rem);
+              font-size: clamp(1.75rem, 5.5vw, 2.25rem);
             }
             .card-content p {
               font-size: 0.8125rem;
             }
             .card-title {
               font-size: 0.6875rem;
-              left: -2.25rem;
             }
             .detailed-view .detail-time {
               font-size: 0.875rem;
@@ -365,6 +369,11 @@ export default function WeatherPage() {
             .detailed-view .detail-text {
               font-size: 0.75rem;
             }
+            .button {
+              width: 2rem;
+              height: 2rem;
+              font-size: 1rem;
+            }
           }
         `}</style>
 
@@ -372,7 +381,7 @@ export default function WeatherPage() {
           <h1 className="title">Прогноз на вечер (19:00–19:45)</h1>
 
           <div className="card" onClick={() => toggleDetailedView('best_match')}>
-            <h2 className="card-title">Best Match Model</h2>
+            <h2 className="card-title">Best Match</h2>
             <div className="card-content">
               <p className="temp">
                 <span>{bestMatchData.compact.icon}</span>
@@ -397,7 +406,7 @@ export default function WeatherPage() {
           </div>
 
           <div className="card" onClick={() => toggleDetailedView('ecmwf')}>
-            <h2 className="card-title">ECMWF AIFS Model</h2>
+            <h2 className="card-title">ECMWF AIFS</h2>
             <div className="card-content">
               <p className="temp">
                 <span>{ecmwfData.compact.icon}</span>
@@ -423,7 +432,7 @@ export default function WeatherPage() {
 
           <div className="button-container">
             <button className="button" onClick={fetchWeatherData}>
-              Обновить
+              🔄
             </button>
           </div>
         </div>
