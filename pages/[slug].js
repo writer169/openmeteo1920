@@ -48,7 +48,7 @@ export default function WeatherPage() {
   const [weatherData, setWeatherData] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
-  const [selectedSource, setSelectedSource] = useState(null); // Для открытия подробного прогноза
+  const [selectedSource, setSelectedSource] = useState(null);
 
   useEffect(() => {
     fetchWeatherData();
@@ -78,17 +78,22 @@ export default function WeatherPage() {
       }),
       temperature: minutely[`temperature_2m_${model}`]?.[index] ?? 'N/A',
       precipitation: minutely[`precipitation_${model}`]?.[index] ?? 0,
-      precipitationProbability: minutely[`precipitation_probability_${model}`]?.[index] ?? 0,
+      precipitationProbability: minutely[`precipitation_probability_${model}`]?.[index] ?? null,
       weatherCode: minutely[`weather_code_${model}`]?.[index] ?? null
     }));
 
     const temps = formattedData.map(item => item.temperature).filter(t => t !== 'N/A');
     const tempRange = temps.length ? `${Math.min(...temps).toFixed(1)}–${Math.max(...temps).toFixed(1)}°C` : 'N/A';
     const hasPrecipitation = formattedData.some(item => item.precipitation > 0);
-    const maxPrecipProbability = Math.max(...formattedData.map(item => item.precipitationProbability));
-    const precipText = hasPrecipitation
-      ? `Осадки: ${Math.max(...formattedData.map(item => item.precipitation))} мм`
-      : maxPrecipProbability > 0
+    const maxPrecipProbability = Math.max(...formattedData.map(item => item.precipitationProbability ?? 0));
+    const precipText =
+      model === 'ecmwf_aifs025_single' || maxPrecipProbability === null
+        ? hasPrecipitation
+          ? `Осадки: ${Math.max(...formattedData.map(item => item.precipitation))} мм`
+          : 'Осадки: отсутствуют'
+        : hasPrecipitation
+        ? `Осадки: ${Math.max(...formattedData.map(item => item.precipitation))} мм`
+        : maxPrecipProbability > 0
         ? `Осадки: отсутствуют, вероятность ${maxPrecipProbability}% к 19:30`
         : 'Осадки: отсутствуют';
     const conditions = [...new Set(formattedData.map(item => item.weatherCode).filter(code => code !== null))];
@@ -278,14 +283,16 @@ export default function WeatherPage() {
           .detailed-view {
             max-height: 0;
             overflow: hidden;
-            transition: max-height 0.3s ease-out;
+            transition: max-height 0.3s ease-out, opacity 0.3s ease-out;
             background: rgba(255, 255, 255, 0.9);
             border-radius: 0 0 1rem 1rem;
             padding: 0 1.25rem;
+            opacity: 0;
           }
           .detailed-view.open {
             max-height: 300px;
             padding: 1rem 1.25rem;
+            opacity: 1;
           }
           .detailed-view .detail-item {
             margin-bottom: 1rem;
