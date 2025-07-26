@@ -203,7 +203,7 @@ export default function WeatherPage() {
         <link rel="preconnect" href="https://fonts.googleapis.com" />
         <link rel="preconnect" href="https://fonts.gstatic.com" crossOrigin="anonymous" />
         <link
-          href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600&family=Poppins:wght@500;700&display=swap"
+          href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&family=Poppins:wght@500;700&display=swap"
           rel="stylesheet"
         />
       </Head>
@@ -248,8 +248,8 @@ export default function WeatherPage() {
           }
           .card-title {
             font-size: 0.75rem;
-            font-weight: 600;
-            color: #1f2937;
+            font-weight: 700;
+            color: #d1d5db;
             text-transform: uppercase;
             position: absolute;
             left: -2.5rem;
@@ -263,7 +263,7 @@ export default function WeatherPage() {
             padding-left: 1.5rem;
           }
           .card-content .temp {
-            font-size: 2rem;
+            font-size: clamp(1.5rem, 5vw, 2rem);
             font-weight: 700;
             color: #f97316;
             font-family: 'Poppins', sans-serif;
@@ -272,6 +272,7 @@ export default function WeatherPage() {
             align-items: center;
             justify-content: center;
             gap: 0.5rem;
+            white-space: nowrap;
           }
           .card-content p {
             color: #4b5563;
@@ -282,7 +283,7 @@ export default function WeatherPage() {
           }
           .detailed-view {
             max-height: 0;
-            overflow: hidden;
+            overflow: auto;
             transition: max-height 0.3s ease-out, opacity 0.3s ease-out;
             background: rgba(255, 255, 255, 0.9);
             border-radius: 0 0 1rem 1rem;
@@ -290,9 +291,10 @@ export default function WeatherPage() {
             opacity: 0;
           }
           .detailed-view.open {
-            max-height: 300px;
+            max-height: 400px;
             padding: 1rem 1.25rem;
             opacity: 1;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
           }
           .detailed-view .detail-item {
             margin-bottom: 1rem;
@@ -345,7 +347,7 @@ export default function WeatherPage() {
               font-size: 1.25rem;
             }
             .card-content .temp {
-              font-size: 1.75rem;
+              font-size: clamp(1.25rem, 4.5vw, 1.75rem);
             }
             .card-content p {
               font-size: 0.8125rem;
