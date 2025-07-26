@@ -48,6 +48,7 @@ export default function WeatherPage() {
   const [weatherData, setWeatherData] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
+  const [selectedSource, setSelectedSource] = useState(null); // Для открытия подробного прогноза
 
   useEffect(() => {
     fetchWeatherData();
@@ -98,10 +99,13 @@ export default function WeatherPage() {
         } (19:45)`;
 
     return {
-      temperature: tempRange,
-      precipitation: precipText,
-      condition: conditionText,
-      icon: getWeatherIcon(formattedData[0]?.weatherCode)
+      compact: {
+        temperature: tempRange,
+        precipitation: precipText,
+        condition: conditionText,
+        icon: getWeatherIcon(formattedData[0]?.weatherCode)
+      },
+      detailed: formattedData
     };
   };
 
@@ -118,6 +122,10 @@ export default function WeatherPage() {
     return '🌤️';
   };
 
+  const toggleDetailedView = (source) => {
+    setSelectedSource(selectedSource === source ? null : source);
+  };
+
   if (loading) {
     return (
       <div className="loading">
@@ -132,14 +140,27 @@ export default function WeatherPage() {
           .loading-text {
             color: white;
             font-size: 1.25rem;
-            animation: pulse 1.5s infinite;
+            font-family: 'Inter', sans-serif;
+            display: flex;
+            align-items: center;
           }
-          @keyframes pulse {
-            0%, 100% { opacity: 1; }
-            50% { opacity: 0.5; }
+          .spinner {
+            width: 1.25rem;
+            height: 1.25rem;
+            border: 2px solid white;
+            border-top-color: transparent;
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+            margin-right: 0.5rem;
+          }
+          @keyframes spin {
+            to { transform: rotate(360deg); }
           }
         `}</style>
-        <div className="loading-text">Загрузка...</div>
+        <div className="loading-text">
+          <span className="spinner"></span>
+          Загрузка...
+        </div>
       </div>
     );
   }
@@ -158,6 +179,7 @@ export default function WeatherPage() {
           .error-text {
             color: #991b1b;
             font-size: 1.25rem;
+            font-family: 'Inter', sans-serif;
           }
         `}</style>
         <div className="error-text">Ошибка: {error}</div>
@@ -173,6 +195,12 @@ export default function WeatherPage() {
       <Head>
         <title>Прогноз погоды</title>
         <meta name="description" content="Прогноз погоды на вечер в Алматы" />
+        <link rel="preconnect" href="https://fonts.googleapis.com" />
+        <link rel="preconnect" href="https://fonts.gstatic.com" crossOrigin="anonymous" />
+        <link
+          href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600&family=Poppins:wght@500;700&display=swap"
+          rel="stylesheet"
+        />
       </Head>
 
       <div className="container">
@@ -183,7 +211,6 @@ export default function WeatherPage() {
             padding: 1rem;
             display: flex;
             flex-direction: column;
-            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
           }
           .main {
             max-width: 20rem;
@@ -194,10 +221,11 @@ export default function WeatherPage() {
           }
           .title {
             font-size: 1.5rem;
-            font-weight: bold;
+            font-weight: 600;
             color: white;
             text-align: center;
             margin-bottom: 1.5rem;
+            font-family: 'Inter', sans-serif;
           }
           .card {
             background: rgba(255, 255, 255, 0.95);
@@ -206,32 +234,80 @@ export default function WeatherPage() {
             padding: 1.25rem;
             box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
             margin-bottom: 1rem;
+            position: relative;
+            cursor: pointer;
             transition: transform 0.2s;
           }
           .card:hover {
             transform: scale(1.02);
           }
           .card-title {
-            font-size: 1.25rem;
+            font-size: 0.75rem;
             font-weight: 600;
             color: #1f2937;
+            text-transform: uppercase;
+            position: absolute;
+            left: -2.5rem;
+            top: 50%;
+            transform: rotate(-90deg) translateY(-50%);
+            transform-origin: center;
+            font-family: 'Inter', sans-serif;
+          }
+          .card-content {
+            text-align: center;
+            padding-left: 1.5rem;
+          }
+          .card-content .temp {
+            font-size: 2rem;
+            font-weight: 700;
+            color: #f97316;
+            font-family: 'Poppins', sans-serif;
+            margin: 0.5rem 0;
             display: flex;
             align-items: center;
-            margin-bottom: 0.75rem;
+            justify-content: center;
+            gap: 0.5rem;
           }
-          .card-title span {
-            margin-right: 0.5rem;
-            font-size: 1.5rem;
-          }
-          .card p {
+          .card-content p {
             color: #4b5563;
             font-size: 0.875rem;
             line-height: 1.5;
             margin: 0.25rem 0;
+            font-family: 'Inter', sans-serif;
           }
-          .card p .temp {
+          .detailed-view {
+            max-height: 0;
+            overflow: hidden;
+            transition: max-height 0.3s ease-out;
+            background: rgba(255, 255, 255, 0.9);
+            border-radius: 0 0 1rem 1rem;
+            padding: 0 1.25rem;
+          }
+          .detailed-view.open {
+            max-height: 300px;
+            padding: 1rem 1.25rem;
+          }
+          .detailed-view .detail-item {
+            margin-bottom: 1rem;
+            text-align: center;
+            font-family: 'Inter', sans-serif;
+          }
+          .detailed-view .detail-item:last-child {
+            margin-bottom: 0;
+          }
+          .detailed-view .detail-time {
+            font-size: 1rem;
+            font-weight: 600;
+            color: #1f2937;
+          }
+          .detailed-view .detail-temp {
+            font-size: 1.25rem;
             color: #f97316;
-            font-weight: 500;
+            font-family: 'Poppins', sans-serif;
+          }
+          .detailed-view .detail-text {
+            font-size: 0.8125rem;
+            color: #4b5563;
           }
           .button-container {
             text-align: center;
@@ -246,6 +322,7 @@ export default function WeatherPage() {
             border: none;
             cursor: pointer;
             transition: background 0.2s, transform 0.1s;
+            font-family: 'Inter', sans-serif;
           }
           .button:hover {
             background: rgba(255, 255, 255, 0.4);
@@ -260,11 +337,24 @@ export default function WeatherPage() {
             .title {
               font-size: 1.25rem;
             }
-            .card-title {
-              font-size: 1.125rem;
+            .card-content .temp {
+              font-size: 1.75rem;
             }
-            .card p {
+            .card-content p {
               font-size: 0.8125rem;
+            }
+            .card-title {
+              font-size: 0.6875rem;
+              left: -2.25rem;
+            }
+            .detailed-view .detail-time {
+              font-size: 0.875rem;
+            }
+            .detailed-view .detail-temp {
+              font-size: 1rem;
+            }
+            .detailed-view .detail-text {
+              font-size: 0.75rem;
             }
           }
         `}</style>
@@ -272,24 +362,54 @@ export default function WeatherPage() {
         <div className="main">
           <h1 className="title">Прогноз на вечер (19:00–19:45)</h1>
 
-          <div className="card">
-            <h2 className="card-title">
-              <span>{bestMatchData.icon}</span>
-              Best Match Model
-            </h2>
-            <p><span className="temp">{bestMatchData.temperature}</span></p>
-            <p>{bestMatchData.precipitation}</p>
-            <p>{bestMatchData.condition}</p>
+          <div className="card" onClick={() => toggleDetailedView('best_match')}>
+            <h2 className="card-title">Best Match Model</h2>
+            <div className="card-content">
+              <p className="temp">
+                <span>{bestMatchData.compact.icon}</span>
+                {bestMatchData.compact.temperature}
+              </p>
+              <p>{bestMatchData.compact.precipitation}</p>
+              <p>{bestMatchData.compact.condition}</p>
+            </div>
+            <div className={`detailed-view ${selectedSource === 'best_match' ? 'open' : ''}`}>
+              {bestMatchData.detailed.map((dataPoint, index) => (
+                <div key={index} className="detail-item">
+                  <div className="detail-time">{dataPoint.time}</div>
+                  <div className="detail-temp">{dataPoint.temperature !== 'N/A' ? `${dataPoint.temperature}°C` : 'N/A'}</div>
+                  <div className="detail-text">Осадки: {dataPoint.precipitation} мм</div>
+                  {dataPoint.precipitationProbability !== null && (
+                    <div className="detail-text">Вероятность: {dataPoint.precipitationProbability}%</div>
+                  )}
+                  <div className="detail-text">{weatherCodes[dataPoint.weatherCode] || 'Неизвестно'}</div>
+                </div>
+              ))}
+            </div>
           </div>
 
-          <div className="card">
-            <h2 className="card-title">
-              <span>{ecmwfData.icon}</span>
-              ECMWF AIFS Model
-            </h2>
-            <p><span className="temp">{ecmwfData.temperature}</span></p>
-            <p>{ecmwfData.precipitation}</p>
-            <p>{ecmwfData.condition}</p>
+          <div className="card" onClick={() => toggleDetailedView('ecmwf')}>
+            <h2 className="card-title">ECMWF AIFS Model</h2>
+            <div className="card-content">
+              <p className="temp">
+                <span>{ecmwfData.compact.icon}</span>
+                {ecmwfData.compact.temperature}
+              </p>
+              <p>{ecmwfData.compact.precipitation}</p>
+              <p>{ecmwfData.compact.condition}</p>
+            </div>
+            <div className={`detailed-view ${selectedSource === 'ecmwf' ? 'open' : ''}`}>
+              {ecmwfData.detailed.map((dataPoint, index) => (
+                <div key={index} className="detail-item">
+                  <div className="detail-time">{dataPoint.time}</div>
+                  <div className="detail-temp">{dataPoint.temperature !== 'N/A' ? `${dataPoint.temperature}°C` : 'N/A'}</div>
+                  <div className="detail-text">Осадки: {dataPoint.precipitation} мм</div>
+                  {dataPoint.precipitationProbability !== null && (
+                    <div className="detail-text">Вероятность: {dataPoint.precipitationProbability}%</div>
+                  )}
+                  <div className="detail-text">{weatherCodes[dataPoint.weatherCode] || 'Неизвестно'}</div>
+                </div>
+              ))}
+            </div>
           </div>
 
           <div className="button-container">
