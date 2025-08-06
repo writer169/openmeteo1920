@@ -33,6 +33,25 @@ const weatherCodes = {
   99: 'Гроза с сильным градом'
 };
 
+const yandexConditions = {
+  'clear': 'Ясно',
+  'partly-cloudy': 'Малооблачно',
+  'cloudy': 'Облачно',
+  'overcast': 'Пасмурно',
+  'light-rain': 'Небольшой дождь',
+  'rain': 'Дождь',
+  'heavy-rain': 'Сильный дождь',
+  'showers': 'Ливень',
+  'wet-snow': 'Дождь со снегом',
+  'light-snow': 'Небольшой снег',
+  'snow': 'Снег',
+  'snow-showers': 'Снегопад',
+  'hail': 'Град',
+  'thunderstorm': 'Гроза',
+  'thunderstorm-with-rain': 'Дождь с грозой',
+  'thunderstorm-with-hail': 'Гроза с градом'
+};
+
 export async function getServerSideProps(context) {
   const { slug } = context.params;
   const expectedSlug = process.env.WEATHER_PAGE_SLUG;
@@ -68,7 +87,7 @@ export default function WeatherPage() {
     }
   };
 
-  const formatWeatherData = (data, model) => {
+  const formatOpenMeteoData = (data, model) => {
     const minutely = data.minutely_15;
     const times = minutely.time;
     const formattedData = times.map((time, index) => ({
@@ -114,6 +133,58 @@ export default function WeatherPage() {
     };
   };
 
+  const formatYandexData = (data) => {
+    if (!data || !data.forecasts || !data.forecasts[0] || !data.forecasts[0].hours) {
+      return null;
+    }
+
+    const hours = data.forecasts[0].hours;
+    const hour19 = hours.find(h => h.hour === '19');
+    const hour20 = hours.find(h => h.hour === '20');
+    
+    if (!hour19 && !hour20) {
+      return null;
+    }
+
+    const formattedData = [hour19, hour20].filter(Boolean).map(hourData => ({
+      time: `${hourData.hour}:00`,
+      temperature: hourData.temp,
+      feelsLike: hourData.feels_like,
+      condition: yandexConditions[hourData.condition] || hourData.condition,
+      humidity: hourData.humidity,
+      windSpeed: hourData.wind_speed,
+      windDir: hourData.wind_dir,
+      precStrength: hourData.prec_strength,
+      precType: hourData.prec_type,
+      isThunder: hourData.is_thunder
+    }));
+
+    const temps = formattedData.map(item => item.temperature);
+    const tempRange = temps.length > 1 
+      ? `${Math.min(...temps)}–${Math.max(...temps)}°C`
+      : `${temps[0]}°C`;
+    
+    const hasPrecipitation = formattedData.some(item => item.precStrength > 0);
+    const precipText = hasPrecipitation 
+      ? `Осадки: ${Math.max(...formattedData.map(item => item.precStrength))} мм/ч`
+      : 'Осадки: отсутствуют';
+    
+    const conditions = [...new Set(formattedData.map(item => item.condition))];
+    const conditionText = conditions.length === 1
+      ? `Условия: ${conditions[0]}`
+      : `Условия: ${conditions.join(', ')}`;
+
+    return {
+      compact: {
+        temperature: tempRange,
+        precipitation: precipText,
+        condition: conditionText,
+        icon: getYandexIcon(formattedData[0]?.condition)
+      },
+      detailed: formattedData
+    };
+  };
+
   const getWeatherIcon = (code) => {
     if (code === 0) return '☀️';
     if ([1, 2, 3].includes(code)) return '⛅';
@@ -124,6 +195,17 @@ export default function WeatherPage() {
     if ([80, 81, 82].includes(code)) return '🌦️';
     if ([85, 86].includes(code)) return '🌨️';
     if ([95, 96, 99].includes(code)) return '⛈️';
+    return '🌤️';
+  };
+
+  const getYandexIcon = (condition) => {
+    if (condition?.includes('Ясно')) return '☀️';
+    if (condition?.includes('облач')) return '⛅';
+    if (condition?.includes('Пасмурно')) return '☁️';
+    if (condition?.includes('дождь') || condition?.includes('Дождь')) return '🌧️';
+    if (condition?.includes('снег') || condition?.includes('Снег')) return '❄️';
+    if (condition?.includes('Гроз')) return '⛈️';
+    if (condition?.includes('Град')) return '🌨️';
     return '🌤️';
   };
 
@@ -194,13 +276,16 @@ export default function WeatherPage() {
     );
   }
 
-  const bestMatchData = formatWeatherData(weatherData, 'best_match');
-  const ecmwfData = formatWeatherData(weatherData, 'ecmwf_aifs025_single');
+  if (!weatherData) return null;
+
+  const bestMatchData = weatherData.openMeteo ? formatOpenMeteoData(weatherData.openMeteo, 'best_match') : null;
+  const ecmwfData = weatherData.openMeteo ? formatOpenMeteoData(weatherData.openMeteo, 'ecmwf_aifs025_single') : null;
+  const yandexData = formatYandexData(weatherData.yandex);
 
   return (
     <>
       <Head>
-        <title>Прогноз погоды</title>
+        <title>Погода</title>
         <meta name="description" content="Прогноз погоды на вечер в Алматы" />
         <link rel="preconnect" href="https://fonts.googleapis.com" />
         <link rel="preconnect" href="https://fonts.gstatic.com" crossOrigin="anonymous" />
@@ -319,31 +404,6 @@ export default function WeatherPage() {
             font-size: 0.8125rem;
             color: #4b5563;
           }
-          .button-container {
-            text-align: center;
-            margin-top: 1.5rem;
-          }
-          .button {
-            background: #f97316;
-            color: white;
-            font-size: 1.25rem;
-            width: 2.5rem;
-            height: 2.5rem;
-            border-radius: 50%;
-            border: none;
-            cursor: pointer;
-            transition: background 0.2s, transform 0.1s;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            box-shadow: 0 2px 6px rgba(0, 0, 0, 0.2);
-          }
-          .button:hover {
-            background: #ea580c;
-          }
-          .button:active {
-            transform: scale(0.95);
-          }
           @media (max-width: 480px) {
             .main {
               max-width: 100%;
@@ -369,72 +429,94 @@ export default function WeatherPage() {
             .detailed-view .detail-text {
               font-size: 0.75rem;
             }
-            .button {
-              width: 2rem;
-              height: 2rem;
-              font-size: 1rem;
-            }
           }
         `}</style>
 
         <div className="main">
-          <h1 className="title">Прогноз на вечер (19:00–19:45)</h1>
+          <h1 className="title">Погода</h1>
 
-          <div className="card" onClick={() => toggleDetailedView('best_match')}>
-            <h2 className="card-title">Best Match</h2>
-            <div className="card-content">
-              <p className="temp">
-                <span>{bestMatchData.compact.icon}</span>
-                {bestMatchData.compact.temperature}
-              </p>
-              <p>{bestMatchData.compact.precipitation}</p>
-              <p>{bestMatchData.compact.condition}</p>
+          {yandexData && (
+            <div className="card" onClick={() => toggleDetailedView('yandex')}>
+              <h2 className="card-title">Yandex</h2>
+              <div className="card-content">
+                <p className="temp">
+                  <span>{yandexData.compact.icon}</span>
+                  {yandexData.compact.temperature}
+                </p>
+                <p>{yandexData.compact.precipitation}</p>
+                <p>{yandexData.compact.condition}</p>
+              </div>
+              <div className={`detailed-view ${selectedSource === 'yandex' ? 'open' : ''}`}>
+                {yandexData.detailed.map((dataPoint, index) => (
+                  <div key={index} className="detail-item">
+                    <div className="detail-time">{dataPoint.time}</div>
+                    <div className="detail-temp">{dataPoint.temperature}°C</div>
+                    <div className="detail-text">Ощущается как: {dataPoint.feelsLike}°C</div>
+                    <div className="detail-text">Влажность: {dataPoint.humidity}%</div>
+                    <div className="detail-text">Ветер: {dataPoint.windSpeed} м/с</div>
+                    {dataPoint.precStrength > 0 && (
+                      <div className="detail-text">Осадки: {dataPoint.precStrength} мм/ч</div>
+                    )}
+                    <div className="detail-text">{dataPoint.condition}</div>
+                  </div>
+                ))}
+              </div>
             </div>
-            <div className={`detailed-view ${selectedSource === 'best_match' ? 'open' : ''}`}>
-              {bestMatchData.detailed.map((dataPoint, index) => (
-                <div key={index} className="detail-item">
-                  <div className="detail-time">{dataPoint.time}</div>
-                  <div className="detail-temp">{dataPoint.temperature !== 'N/A' ? `${dataPoint.temperature}°C` : 'N/A'}</div>
-                  <div className="detail-text">Осадки: {dataPoint.precipitation} мм</div>
-                  {dataPoint.precipitationProbability !== null && (
-                    <div className="detail-text">Вероятность: {dataPoint.precipitationProbability}%</div>
-                  )}
-                  <div className="detail-text">{weatherCodes[dataPoint.weatherCode] || 'Неизвестно'}</div>
-                </div>
-              ))}
-            </div>
-          </div>
+          )}
 
-          <div className="card" onClick={() => toggleDetailedView('ecmwf')}>
-            <h2 className="card-title">ECMWF AIFS</h2>
-            <div className="card-content">
-              <p className="temp">
-                <span>{ecmwfData.compact.icon}</span>
-                {ecmwfData.compact.temperature}
-              </p>
-              <p>{ecmwfData.compact.precipitation}</p>
-              <p>{ecmwfData.compact.condition}</p>
+          {bestMatchData && (
+            <div className="card" onClick={() => toggleDetailedView('best_match')}>
+              <h2 className="card-title">Best Match</h2>
+              <div className="card-content">
+                <p className="temp">
+                  <span>{bestMatchData.compact.icon}</span>
+                  {bestMatchData.compact.temperature}
+                </p>
+                <p>{bestMatchData.compact.precipitation}</p>
+                <p>{bestMatchData.compact.condition}</p>
+              </div>
+              <div className={`detailed-view ${selectedSource === 'best_match' ? 'open' : ''}`}>
+                {bestMatchData.detailed.map((dataPoint, index) => (
+                  <div key={index} className="detail-item">
+                    <div className="detail-time">{dataPoint.time}</div>
+                    <div className="detail-temp">{dataPoint.temperature !== 'N/A' ? `${dataPoint.temperature}°C` : 'N/A'}</div>
+                    <div className="detail-text">Осадки: {dataPoint.precipitation} мм</div>
+                    {dataPoint.precipitationProbability !== null && (
+                      <div className="detail-text">Вероятность: {dataPoint.precipitationProbability}%</div>
+                    )}
+                    <div className="detail-text">{weatherCodes[dataPoint.weatherCode] || 'Неизвестно'}</div>
+                  </div>
+                ))}
+              </div>
             </div>
-            <div className={`detailed-view ${selectedSource === 'ecmwf' ? 'open' : ''}`}>
-              {ecmwfData.detailed.map((dataPoint, index) => (
-                <div key={index} className="detail-item">
-                  <div className="detail-time">{dataPoint.time}</div>
-                  <div className="detail-temp">{dataPoint.temperature !== 'N/A' ? `${dataPoint.temperature}°C` : 'N/A'}</div>
-                  <div className="detail-text">Осадки: {dataPoint.precipitation} мм</div>
-                  {dataPoint.precipitationProbability !== null && (
-                    <div className="detail-text">Вероятность: {dataPoint.precipitationProbability}%</div>
-                  )}
-                  <div className="detail-text">{weatherCodes[dataPoint.weatherCode] || 'Неизвестно'}</div>
-                </div>
-              ))}
-            </div>
-          </div>
+          )}
 
-          <div className="button-container">
-            <button className="button" onClick={fetchWeatherData}>
-              🔄
-            </button>
-          </div>
+          {ecmwfData && (
+            <div className="card" onClick={() => toggleDetailedView('ecmwf')}>
+              <h2 className="card-title">ECMWF AIFS</h2>
+              <div className="card-content">
+                <p className="temp">
+                  <span>{ecmwfData.compact.icon}</span>
+                  {ecmwfData.compact.temperature}
+                </p>
+                <p>{ecmwfData.compact.precipitation}</p>
+                <p>{ecmwfData.compact.condition}</p>
+              </div>
+              <div className={`detailed-view ${selectedSource === 'ecmwf' ? 'open' : ''}`}>
+                {ecmwfData.detailed.map((dataPoint, index) => (
+                  <div key={index} className="detail-item">
+                    <div className="detail-time">{dataPoint.time}</div>
+                    <div className="detail-temp">{dataPoint.temperature !== 'N/A' ? `${dataPoint.temperature}°C` : 'N/A'}</div>
+                    <div className="detail-text">Осадки: {dataPoint.precipitation} мм</div>
+                    {dataPoint.precipitationProbability !== null && (
+                      <div className="detail-text">Вероятность: {dataPoint.precipitationProbability}%</div>
+                    )}
+                    <div className="detail-text">{weatherCodes[dataPoint.weatherCode] || 'Неизвестно'}</div>
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
         </div>
       </div>
     </>
