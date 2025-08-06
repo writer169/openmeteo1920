@@ -134,24 +134,15 @@ export default function WeatherPage() {
   };
 
   const formatYandexData = (data) => {
-    console.log('Formatting Yandex data:', data);
-    
     if (!data || !data.forecasts || !data.forecasts[0] || !data.forecasts[0].hours) {
-      console.log('Yandex data structure is invalid or missing');
       return null;
     }
 
     const hours = data.forecasts[0].hours;
-    console.log('Available hours:', hours.map(h => h.hour));
-    
     const hour19 = hours.find(h => h.hour === '19');
     const hour20 = hours.find(h => h.hour === '20');
     
-    console.log('Hour 19 data:', hour19);
-    console.log('Hour 20 data:', hour20);
-    
     if (!hour19 && !hour20) {
-      console.log('Neither hour 19 nor hour 20 found');
       return null;
     }
 
@@ -182,16 +173,6 @@ export default function WeatherPage() {
     const conditionText = conditions.length === 1
       ? `Условия: ${conditions[0]}`
       : `Условия: ${conditions.join(', ')}`;
-
-    console.log('Formatted Yandex data:', {
-      compact: {
-        temperature: tempRange,
-        precipitation: precipText,
-        condition: conditionText,
-        icon: getYandexIcon(formattedData[0]?.condition)
-      },
-      detailed: formattedData
-    });
 
     return {
       compact: {
@@ -297,14 +278,9 @@ export default function WeatherPage() {
 
   if (!weatherData) return null;
 
-  console.log('Weather Data:', weatherData);
-  console.log('Yandex Data exists:', !!weatherData.yandex);
-
   const bestMatchData = weatherData.openMeteo ? formatOpenMeteoData(weatherData.openMeteo, 'best_match') : null;
   const ecmwfData = weatherData.openMeteo ? formatOpenMeteoData(weatherData.openMeteo, 'ecmwf_aifs025_single') : null;
   const yandexData = formatYandexData(weatherData.yandex);
-
-  console.log('Formatted Yandex Data:', yandexData);
 
   return (
     <>
@@ -458,22 +434,6 @@ export default function WeatherPage() {
 
         <div className="main">
           <h1 className="title">Погода</h1>
-          
-          {/* Отладочная информация */}
-          <div style={{ 
-            background: '#f3f4f6', 
-            padding: '10px', 
-            marginBottom: '10px', 
-            borderRadius: '8px', 
-            fontSize: '12px',
-            fontFamily: 'monospace'
-          }}>
-            <div>Yandex data exists: {weatherData?.yandex ? 'Yes' : 'No'}</div>
-            <div>Yandex formatted: {yandexData ? 'Yes' : 'No'}</div>
-            {weatherData?.yandex && (
-              <div>Yandex forecasts length: {weatherData.yandex.forecasts?.length || 0}</div>
-            )}
-          </div>
 
           {yandexData && (
             <div className="card" onClick={() => toggleDetailedView('yandex')}>
