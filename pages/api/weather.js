@@ -11,27 +11,17 @@ export default async function handler(req, res) {
     // Fetch Yandex data
     let yandexData = null;
     try {
-      console.log('Attempting to fetch Yandex data...');
-      console.log('Yandex API Key:', process.env.YANDEX_WEATHER_KEY ? 'Present' : 'Missing');
-      
       const yandexResponse = await fetch('https://api.weather.yandex.ru/v2/forecast?lat=43.23&lon=76.86', {
         headers: {
           'X-Yandex-Weather-Key': process.env.YANDEX_WEATHER_KEY || 'YANDEX_KEY'
         }
       });
       
-      console.log('Yandex Response Status:', yandexResponse.status);
-      console.log('Yandex Response OK:', yandexResponse.ok);
-      
       if (yandexResponse.ok) {
         yandexData = await yandexResponse.json();
-        console.log('Yandex Data Structure:', JSON.stringify(yandexData, null, 2));
-      } else {
-        const errorText = await yandexResponse.text();
-        console.error('Yandex API Error:', errorText);
       }
     } catch (yandexError) {
-      console.error('Failed to fetch Yandex weather data:', yandexError);
+      console.warn('Failed to fetch Yandex weather data:', yandexError);
     }
     
     res.status(200).json({
