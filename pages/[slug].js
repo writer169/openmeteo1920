@@ -328,7 +328,7 @@ export default function WeatherPage() {
           .header {
             text-align: center;
             margin-bottom: 1.5rem;
-            margin-top: 0.5rem;
+            margin-top: 0.25rem;
           }
           .title {
             font-size: 1.75rem;
@@ -485,9 +485,7 @@ export default function WeatherPage() {
                     {dataPoint.precStrength > 0 && (
                       <div className="detail-text">Осадки: {dataPoint.precStrength} мм/ч</div>
                     )}
-                    {dataPoint.precPeriod > 0 && (
-                      <div className="detail-text">Вероятность осадков: {dataPoint.precPeriod} мин</div>
-                    )}
+
                     {dataPoint.isThunder && (
                       <div className="detail-text">Вероятность грозы</div>
                     )}
