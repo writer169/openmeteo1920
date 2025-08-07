@@ -314,7 +314,7 @@ export default function WeatherPage() {
             min-height: 100vh;
             background: #e5e7eb;
             border-radius: 1rem;
-            padding: 0.5rem;
+            padding: 0rem;
             display: flex;
             flex-direction: column;
           }
