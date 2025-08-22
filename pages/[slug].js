@@ -68,6 +68,7 @@ export default function WeatherPage() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const [selectedSource, setSelectedSource] = useState(null);
+  const [updateTime, setUpdateTime] = useState(null);
 
   useEffect(() => {
     fetchWeatherData();
@@ -80,11 +81,26 @@ export default function WeatherPage() {
       if (!response.ok) throw new Error('Failed to fetch');
       const data = await response.json();
       setWeatherData(data);
+      setUpdateTime(new Date());
     } catch (err) {
       setError(err.message);
     } finally {
       setLoading(false);
     }
+  };
+
+  const formatUpdateTime = (date) => {
+    const months = [
+      'января', 'февраля', 'марта', 'апреля', 'мая', 'июня',
+      'июля', 'августа', 'сентября', 'октября', 'ноября', 'декабря'
+    ];
+    
+    const day = date.getDate();
+    const month = months[date.getMonth()];
+    const hours = date.getHours().toString().padStart(2, '0');
+    const minutes = date.getMinutes().toString().padStart(2, '0');
+    
+    return `${day} ${month} ${hours}:${minutes}`;
   };
 
   const formatOpenMeteoData = (data, model) => {
@@ -149,13 +165,10 @@ export default function WeatherPage() {
     const formattedData = [hour19, hour20].filter(Boolean).map(hourData => ({
       time: `${hourData.hour}:00`,
       temperature: hourData.temp,
-      feelsLike: hourData.feels_like,
       condition: yandexConditions[hourData.condition] || hourData.condition,
-      humidity: hourData.humidity,
-      windSpeed: hourData.wind_speed,
-      windDir: hourData.wind_dir,
       precStrength: hourData.prec_strength,
       precType: hourData.prec_type,
+      precPeriod: hourData.prec_period,
       isThunder: hourData.is_thunder
     }));
 
@@ -285,7 +298,7 @@ export default function WeatherPage() {
   return (
     <>
       <Head>
-        <title>Погода</title>
+        <title>Погода на вечер</title>
         <meta name="description" content="Прогноз погоды на вечер в Алматы" />
         <link rel="preconnect" href="https://fonts.googleapis.com" />
         <link rel="preconnect" href="https://fonts.gstatic.com" crossOrigin="anonymous" />
@@ -301,7 +314,7 @@ export default function WeatherPage() {
             min-height: 100vh;
             background: #e5e7eb;
             border-radius: 1rem;
-            padding: 1rem;
+            padding: 0rem;
             display: flex;
             flex-direction: column;
           }
@@ -312,14 +325,24 @@ export default function WeatherPage() {
             display: flex;
             flex-direction: column;
           }
+          .header {
+            text-align: center;
+            margin-bottom: 1.5rem;
+            margin-top: 0.25rem;
+          }
           .title {
             font-size: 1.75rem;
             font-weight: 700;
             color: #1f2937;
-            text-align: center;
-            margin-bottom: 1.5rem;
+            margin-bottom: 0.25rem;
             font-family: 'Playfair Display', serif;
             text-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+          }
+          .update-time {
+            font-size: 0.75rem;
+            color: #6b7280;
+            font-family: 'Inter', sans-serif;
+            margin: 0;
           }
           .card {
             background: rgba(255, 255, 255, 0.95);
@@ -337,7 +360,7 @@ export default function WeatherPage() {
           .card-title {
             font-size: 0.75rem;
             font-weight: 700;
-            color: #d1d5db;
+            color: #9ca3af;
             text-transform: uppercase;
             text-align: center;
             margin-bottom: 0.75rem;
@@ -411,6 +434,9 @@ export default function WeatherPage() {
             .title {
               font-size: 1.5rem;
             }
+            .update-time {
+              font-size: 0.6875rem;
+            }
             .card-content .temp {
               font-size: clamp(1.75rem, 5.5vw, 2.25rem);
             }
@@ -433,7 +459,12 @@ export default function WeatherPage() {
         `}</style>
 
         <div className="main">
-          <h1 className="title">Погода</h1>
+          <div className="header">
+            <h1 className="title">Погода на вечер</h1>
+            {updateTime && (
+              <p className="update-time">{formatUpdateTime(updateTime)}</p>
+            )}
+          </div>
 
           {yandexData && (
             <div className="card" onClick={() => toggleDetailedView('yandex')}>
@@ -451,11 +482,12 @@ export default function WeatherPage() {
                   <div key={index} className="detail-item">
                     <div className="detail-time">{dataPoint.time}</div>
                     <div className="detail-temp">{dataPoint.temperature}°C</div>
-                    <div className="detail-text">Ощущается как: {dataPoint.feelsLike}°C</div>
-                    <div className="detail-text">Влажность: {dataPoint.humidity}%</div>
-                    <div className="detail-text">Ветер: {dataPoint.windSpeed} м/с</div>
                     {dataPoint.precStrength > 0 && (
                       <div className="detail-text">Осадки: {dataPoint.precStrength} мм/ч</div>
+                    )}
+
+                    {dataPoint.isThunder && (
+                      <div className="detail-text">Вероятность грозы</div>
                     )}
                     <div className="detail-text">{dataPoint.condition}</div>
                   </div>
