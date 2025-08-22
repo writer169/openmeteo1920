@@ -1,556 +1,121 @@
-// pages/[slug].js
-import { useState, useEffect } from 'react';
-import Head from 'next/head';
-
-const weatherCodes = {
-  0: 'Ясное небо',
-  1: 'В основном ясно',
-  2: 'Переменная облачность',
-  3: 'Пасмурно',
-  45: 'Туман',
-  48: 'Изморозь',
-  51: 'Слабая морось',
-  53: 'Умеренная морось',
-  55: 'Густая морось',
-  56: 'Слабая ледяная морось',
-  57: 'Густая ледяная морось',
-  61: 'Слабый дождь',
-  63: 'Умеренный дождь',
-  65: 'Сильный дождь',
-  66: 'Слабый ледяной дождь',
-  67: 'Сильный ледяной дождь',
-  71: 'Слабый снег',
-  73: 'Умеренный снег',
-  75: 'Сильный снег',
-  77: 'Снежная крупа',
-  80: 'Слабые дождевые ливни',
-  81: 'Умеренные дождевые ливни',
-  82: 'Сильные дождевые ливни',
-  85: 'Слабые снежные ливни',
-  86: 'Сильные снежные ливни',
-  95: 'Гроза',
-  96: 'Гроза со слабым градом',
-  99: 'Гроза с сильным градом'
-};
-
-const yandexConditions = {
-  'clear': 'Ясно',
-  'partly-cloudy': 'Малооблачно',
-  'cloudy': 'Облачно',
-  'overcast': 'Пасмурно',
-  'light-rain': 'Небольшой дождь',
-  'rain': 'Дождь',
-  'heavy-rain': 'Сильный дождь',
-  'showers': 'Ливень',
-  'wet-snow': 'Дождь со снегом',
-  'light-snow': 'Небольшой снег',
-  'snow': 'Снег',
-  'snow-showers': 'Снегопад',
-  'hail': 'Град',
-  'thunderstorm': 'Гроза',
-  'thunderstorm-with-rain': 'Дождь с грозой',
-  'thunderstorm-with-hail': 'Гроза с градом'
-};
-
-export async function getServerSideProps(context) {
-  const { slug } = context.params;
-  const expectedSlug = process.env.WEATHER_PAGE_SLUG;
-
-  if (slug !== expectedSlug) {
-    return { notFound: true };
-  }
-
-  return { props: {} };
-}
+import { useEffect, useState } from "react";
+import { weatherCodes, yandexConditions } from "../utils/weatherDictionaries";
+import WeatherCard from "../components/WeatherCard";
+import styles from "../styles/WeatherPage.module.css";
 
 export default function WeatherPage() {
-  const [weatherData, setWeatherData] = useState(null);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState(null);
-  const [selectedSource, setSelectedSource] = useState(null);
+  const [yandexData, setYandexData] = useState(null);
+  const [bestMatchData, setBestMatchData] = useState(null);
+  const [ecmwfData, setEcmwfData] = useState(null);
   const [updateTime, setUpdateTime] = useState(null);
+  const [selectedSource, setSelectedSource] = useState(null);
 
   useEffect(() => {
+    const fetchWeatherData = async () => {
+      try {
+        const response = await fetch("/api/weather");
+        const data = await response.json();
+        if (!data) return;
+
+        if (data.openMeteo) {
+          const bestMatch = data.openMeteo.minutely_15.find(
+            (entry) => entry.model === "best_match"
+          );
+          const ecmwf = data.openMeteo.minutely_15.find(
+            (entry) => entry.model === "ecmwf_aifs025_single"
+          );
+
+          setBestMatchData(formatForecast(bestMatch, "openMeteo"));
+          setEcmwfData(formatForecast(ecmwf, "openMeteo"));
+          setUpdateTime(new Date(data.openMeteo.generationtime_ms));
+        }
+
+        if (data.yandex) {
+          setYandexData(formatForecast(data.yandex, "yandex"));
+        }
+      } catch (error) {
+        console.error("Ошибка загрузки данных:", error);
+      }
+    };
+
     fetchWeatherData();
   }, []);
 
-  const fetchWeatherData = async () => {
-    try {
-      setLoading(true);
-      const response = await fetch('/api/weather');
-      if (!response.ok) throw new Error('Failed to fetch');
-      const data = await response.json();
-      setWeatherData(data);
-      setUpdateTime(new Date());
-    } catch (err) {
-      setError(err.message);
-    } finally {
-      setLoading(false);
+  const formatForecast = (data, source) => {
+    if (!data) return null;
+    if (source === "openMeteo") {
+      return {
+        compact: {
+          temperature: data.temperature_2m[0] + "°C",
+          precipitation: `Осадки: ${data.precipitation[0]} мм`,
+          condition: weatherCodes[data.weather_code[0]] || "N/A",
+          icon: "🌤",
+        },
+        detailed: data.time.map((time, i) => ({
+          time: new Date(time).toLocaleTimeString("ru-RU", { hour: "2-digit", minute: "2-digit" }),
+          temperature: data.temperature_2m[i],
+          precipitation: data.precipitation[i],
+          precipitationProbability: data.precipitation_probability[i],
+          condition: weatherCodes[data.weather_code[i]],
+        })),
+      };
+    }
+    if (source === "yandex") {
+      return {
+        compact: {
+          temperature: data.fact.temp + "°C",
+          precipitation: data.fact.precipitation_type ? "Осадки" : "Без осадков",
+          condition: yandexConditions[data.fact.condition] || data.fact.condition,
+          icon: "☀️",
+        },
+        detailed: data.forecasts[0].hours.map((hour) => ({
+          time: hour.hour + ":00",
+          temperature: hour.temp,
+          precipitation: hour.prec_mm,
+          condition: yandexConditions[hour.condition] || hour.condition,
+        })),
+      };
     }
   };
 
-  const formatUpdateTime = (date) => {
-    const months = [
-      'января', 'февраля', 'марта', 'апреля', 'мая', 'июня',
-      'июля', 'августа', 'сентября', 'октября', 'ноября', 'декабря'
-    ];
-    
-    const day = date.getDate();
-    const month = months[date.getMonth()];
-    const hours = date.getHours().toString().padStart(2, '0');
-    const minutes = date.getMinutes().toString().padStart(2, '0');
-    
-    return `${day} ${month} ${hours}:${minutes}`;
-  };
-
-  const formatOpenMeteoData = (data, model) => {
-    const minutely = data.minutely_15;
-    const times = minutely.time;
-    const formattedData = times.map((time, index) => ({
-      time: new Date(time).toLocaleTimeString('ru-RU', {
-        hour: '2-digit',
-        minute: '2-digit'
-      }),
-      temperature: minutely[`temperature_2m_${model}`]?.[index] ?? 'N/A',
-      precipitation: minutely[`precipitation_${model}`]?.[index] ?? 0,
-      precipitationProbability: minutely[`precipitation_probability_${model}`]?.[index] ?? null,
-      weatherCode: minutely[`weather_code_${model}`]?.[index] ?? null
-    }));
-
-    const temps = formattedData.map(item => item.temperature).filter(t => t !== 'N/A');
-    const tempRange = temps.length ? `${Math.min(...temps).toFixed(1)}–${Math.max(...temps).toFixed(1)}°C` : 'N/A';
-    const hasPrecipitation = formattedData.some(item => item.precipitation > 0);
-    const maxPrecipProbability = Math.max(...formattedData.map(item => item.precipitationProbability ?? 0));
-    const precipText =
-      model === 'ecmwf_aifs025_single' || maxPrecipProbability === null
-        ? hasPrecipitation
-          ? `Осадки: ${Math.max(...formattedData.map(item => item.precipitation))} мм`
-          : 'Осадки: отсутствуют'
-        : hasPrecipitation
-        ? `Осадки: ${Math.max(...formattedData.map(item => item.precipitation))} мм`
-        : maxPrecipProbability > 0
-        ? `Осадки: отсутствуют, вероятность ${maxPrecipProbability}% к 19:30`
-        : 'Осадки: отсутствуют';
-    const conditions = [...new Set(formattedData.map(item => item.weatherCode).filter(code => code !== null))];
-    const conditionText = conditions.length === 1
-      ? `Условия: ${weatherCodes[conditions[0]] || 'Неизвестно'}`
-      : `Условия: от ${weatherCodes[formattedData[0]?.weatherCode] || 'Неизвестно'} (19:00) до ${
-          weatherCodes[formattedData[formattedData.length - 1]?.weatherCode] || 'Неизвестно'
-        } (19:45)`;
-
-    return {
-      compact: {
-        temperature: tempRange,
-        precipitation: precipText,
-        condition: conditionText,
-        icon: getWeatherIcon(formattedData[0]?.weatherCode)
-      },
-      detailed: formattedData
-    };
-  };
-
-  const formatYandexData = (data) => {
-    if (!data || !data.forecasts || !data.forecasts[0] || !data.forecasts[0].hours) {
-      return null;
-    }
-
-    const hours = data.forecasts[0].hours;
-    const hour19 = hours.find(h => h.hour === '19');
-    const hour20 = hours.find(h => h.hour === '20');
-    
-    if (!hour19 && !hour20) {
-      return null;
-    }
-
-    const formattedData = [hour19, hour20].filter(Boolean).map(hourData => ({
-      time: `${hourData.hour}:00`,
-      temperature: hourData.temp,
-      condition: yandexConditions[hourData.condition] || hourData.condition,
-      precStrength: hourData.prec_strength,
-      precType: hourData.prec_type,
-      precPeriod: hourData.prec_period,
-      isThunder: hourData.is_thunder
-    }));
-
-    const temps = formattedData.map(item => item.temperature);
-    const tempRange = temps.length > 1 
-      ? `${Math.min(...temps)}–${Math.max(...temps)}°C`
-      : `${temps[0]}°C`;
-    
-    const hasPrecipitation = formattedData.some(item => item.precStrength > 0);
-    const precipText = hasPrecipitation 
-      ? `Осадки: ${Math.max(...formattedData.map(item => item.precStrength))} мм/ч`
-      : 'Осадки: отсутствуют';
-    
-    const conditions = [...new Set(formattedData.map(item => item.condition))];
-    const conditionText = conditions.length === 1
-      ? `Условия: ${conditions[0]}`
-      : `Условия: ${conditions.join(', ')}`;
-
-    return {
-      compact: {
-        temperature: tempRange,
-        precipitation: precipText,
-        condition: conditionText,
-        icon: getYandexIcon(formattedData[0]?.condition)
-      },
-      detailed: formattedData
-    };
-  };
-
-  const getWeatherIcon = (code) => {
-    if (code === 0) return '☀️';
-    if ([1, 2, 3].includes(code)) return '⛅';
-    if ([45, 48].includes(code)) return '🌫️';
-    if ([51, 53, 55, 56, 57].includes(code)) return '🌦️';
-    if ([61, 63, 65, 66, 67].includes(code)) return '🌧️';
-    if ([71, 73, 75, 77].includes(code)) return '❄️';
-    if ([80, 81, 82].includes(code)) return '🌦️';
-    if ([85, 86].includes(code)) return '🌨️';
-    if ([95, 96, 99].includes(code)) return '⛈️';
-    return '🌤️';
-  };
-
-  const getYandexIcon = (condition) => {
-    if (condition?.includes('Ясно')) return '☀️';
-    if (condition?.includes('облач')) return '⛅';
-    if (condition?.includes('Пасмурно')) return '☁️';
-    if (condition?.includes('дождь') || condition?.includes('Дождь')) return '🌧️';
-    if (condition?.includes('снег') || condition?.includes('Снег')) return '❄️';
-    if (condition?.includes('Гроз')) return '⛈️';
-    if (condition?.includes('Град')) return '🌨️';
-    return '🌤️';
-  };
+  const formatUpdateTime = (date) =>
+    new Intl.DateTimeFormat("ru-RU", {
+      day: "numeric",
+      month: "long",
+      hour: "2-digit",
+      minute: "2-digit",
+    }).format(date);
 
   const toggleDetailedView = (source) => {
     setSelectedSource(selectedSource === source ? null : source);
   };
 
-  if (loading) {
-    return (
-      <div className="loading">
-        <style jsx>{`
-          .loading {
-            min-height: 100vh;
-            background: #e5e7eb;
-            border-radius: 1rem;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-          }
-          .loading-text {
-            color: #1f2937;
-            font-size: 1.25rem;
-            font-family: 'Inter', sans-serif;
-            display: flex;
-            align-items: center;
-          }
-          .spinner {
-            width: 1.25rem;
-            height: 1.25rem;
-            border: 2px solid #1f2937;
-            border-top-color: transparent;
-            border-radius: 50%;
-            animation: spin 1s linear infinite;
-            margin-right: 0.5rem;
-          }
-          @keyframes spin {
-            to { transform: rotate(360deg); }
-          }
-        `}</style>
-        <div className="loading-text">
-          <span className="spinner"></span>
-          Загрузка...
-        </div>
-      </div>
-    );
-  }
-
-  if (error) {
-    return (
-      <div className="error">
-        <style jsx>{`
-          .error {
-            min-height: 100vh;
-            background: #fee2e2;
-            border-radius: 1rem;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-          }
-          .error-text {
-            color: #991b1b;
-            font-size: 1.25rem;
-            font-family: 'Inter', sans-serif;
-          }
-        `}</style>
-        <div className="error-text">Ошибка: {error}</div>
-      </div>
-    );
-  }
-
-  if (!weatherData) return null;
-
-  const bestMatchData = weatherData.openMeteo ? formatOpenMeteoData(weatherData.openMeteo, 'best_match') : null;
-  const ecmwfData = weatherData.openMeteo ? formatOpenMeteoData(weatherData.openMeteo, 'ecmwf_aifs025_single') : null;
-  const yandexData = formatYandexData(weatherData.yandex);
-
   return (
-    <>
-      <Head>
-        <title>Погода на вечер</title>
-        <meta name="description" content="Прогноз погоды на вечер в Алматы" />
-        <link rel="preconnect" href="https://fonts.googleapis.com" />
-        <link rel="preconnect" href="https://fonts.gstatic.com" crossOrigin="anonymous" />
-        <link
-          href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&family=Poppins:wght@500;700&family=Playfair+Display:wght@700&display=swap"
-          rel="stylesheet"
-        />
-      </Head>
+    <div className={styles.container}>
+      <h1 className={styles.header}>Прогноз погоды</h1>
+      {updateTime && <p className={styles.update}>Обновлено: {formatUpdateTime(updateTime)}</p>}
 
-      <div className="container">
-        <style jsx>{`
-          .container {
-            min-height: 100vh;
-            background: #e5e7eb;
-            border-radius: 1rem;
-            padding: 0rem;
-            display: flex;
-            flex-direction: column;
-          }
-          .main {
-            max-width: 20rem;
-            margin: 0 auto;
-            flex: 1;
-            display: flex;
-            flex-direction: column;
-          }
-          .header {
-            text-align: center;
-            margin-bottom: 1.5rem;
-            margin-top: 0.25rem;
-          }
-          .title {
-            font-size: 1.75rem;
-            font-weight: 700;
-            color: #1f2937;
-            margin-bottom: 0.25rem;
-            font-family: 'Playfair Display', serif;
-            text-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
-          }
-          .update-time {
-            font-size: 0.75rem;
-            color: #6b7280;
-            font-family: 'Inter', sans-serif;
-            margin: 0;
-          }
-          .card {
-            background: rgba(255, 255, 255, 0.95);
-            backdrop-filter: blur(8px);
-            border-radius: 1rem;
-            padding: 1.25rem;
-            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
-            margin-bottom: 1rem;
-            cursor: pointer;
-            transition: transform 0.2s;
-          }
-          .card:hover {
-            transform: scale(1.02);
-          }
-          .card-title {
-            font-size: 0.75rem;
-            font-weight: 700;
-            color: #9ca3af;
-            text-transform: uppercase;
-            text-align: center;
-            margin-bottom: 0.75rem;
-            font-family: 'Inter', sans-serif;
-            text-shadow: 0 1px 2px rgba(0, 0, 0, 0.1);
-          }
-          .card-content {
-            text-align: center;
-          }
-          .card-content .temp {
-            font-size: clamp(2rem, 6vw, 2.5rem);
-            font-weight: 700;
-            color: #f97316;
-            font-family: 'Poppins', sans-serif;
-            margin: 0.5rem 0;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            gap: 0.5rem;
-            white-space: nowrap;
-            text-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
-          }
-          .card-content p {
-            color: #4b5563;
-            font-size: 0.875rem;
-            line-height: 1.5;
-            margin: 0.25rem 0;
-            font-family: 'Inter', sans-serif;
-          }
-          .detailed-view {
-            max-height: 0;
-            overflow: auto;
-            transition: max-height 0.3s ease-out, opacity 0.3s ease-out;
-            background: rgba(255, 255, 255, 0.9);
-            border-radius: 0 0 1rem 1rem;
-            padding: 0 1.25rem;
-            opacity: 0;
-          }
-          .detailed-view.open {
-            max-height: 400px;
-            padding: 1rem 1.25rem;
-            opacity: 1;
-            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
-          }
-          .detailed-view .detail-item {
-            margin-bottom: 1rem;
-            text-align: center;
-            font-family: 'Inter', sans-serif;
-          }
-          .detailed-view .detail-item:last-child {
-            margin-bottom: 0;
-          }
-          .detailed-view .detail-time {
-            font-size: 1rem;
-            font-weight: 600;
-            color: #1f2937;
-          }
-          .detailed-view .detail-temp {
-            font-size: 1.25rem;
-            color: #f97316;
-            font-family: 'Poppins', sans-serif;
-          }
-          .detailed-view .detail-text {
-            font-size: 0.8125rem;
-            color: #4b5563;
-          }
-          @media (max-width: 480px) {
-            .main {
-              max-width: 100%;
-            }
-            .title {
-              font-size: 1.5rem;
-            }
-            .update-time {
-              font-size: 0.6875rem;
-            }
-            .card-content .temp {
-              font-size: clamp(1.75rem, 5.5vw, 2.25rem);
-            }
-            .card-content p {
-              font-size: 0.8125rem;
-            }
-            .card-title {
-              font-size: 0.6875rem;
-            }
-            .detailed-view .detail-time {
-              font-size: 0.875rem;
-            }
-            .detailed-view .detail-temp {
-              font-size: 1rem;
-            }
-            .detailed-view .detail-text {
-              font-size: 0.75rem;
-            }
-          }
-        `}</style>
-
-        <div className="main">
-          <div className="header">
-            <h1 className="title">Погода на вечер</h1>
-            {updateTime && (
-              <p className="update-time">{formatUpdateTime(updateTime)}</p>
-            )}
-          </div>
-
-          {yandexData && (
-            <div className="card" onClick={() => toggleDetailedView('yandex')}>
-              <h2 className="card-title">Yandex</h2>
-              <div className="card-content">
-                <p className="temp">
-                  <span>{yandexData.compact.icon}</span>
-                  {yandexData.compact.temperature}
-                </p>
-                <p>{yandexData.compact.precipitation}</p>
-                <p>{yandexData.compact.condition}</p>
-              </div>
-              <div className={`detailed-view ${selectedSource === 'yandex' ? 'open' : ''}`}>
-                {yandexData.detailed.map((dataPoint, index) => (
-                  <div key={index} className="detail-item">
-                    <div className="detail-time">{dataPoint.time}</div>
-                    <div className="detail-temp">{dataPoint.temperature}°C</div>
-                    {dataPoint.precStrength > 0 && (
-                      <div className="detail-text">Осадки: {dataPoint.precStrength} мм/ч</div>
-                    )}
-
-                    {dataPoint.isThunder && (
-                      <div className="detail-text">Вероятность грозы</div>
-                    )}
-                    <div className="detail-text">{dataPoint.condition}</div>
-                  </div>
-                ))}
-              </div>
-            </div>
-          )}
-
-          {bestMatchData && (
-            <div className="card" onClick={() => toggleDetailedView('best_match')}>
-              <h2 className="card-title">Best Match</h2>
-              <div className="card-content">
-                <p className="temp">
-                  <span>{bestMatchData.compact.icon}</span>
-                  {bestMatchData.compact.temperature}
-                </p>
-                <p>{bestMatchData.compact.precipitation}</p>
-                <p>{bestMatchData.compact.condition}</p>
-              </div>
-              <div className={`detailed-view ${selectedSource === 'best_match' ? 'open' : ''}`}>
-                {bestMatchData.detailed.map((dataPoint, index) => (
-                  <div key={index} className="detail-item">
-                    <div className="detail-time">{dataPoint.time}</div>
-                    <div className="detail-temp">{dataPoint.temperature !== 'N/A' ? `${dataPoint.temperature}°C` : 'N/A'}</div>
-                    <div className="detail-text">Осадки: {dataPoint.precipitation} мм</div>
-                    {dataPoint.precipitationProbability !== null && (
-                      <div className="detail-text">Вероятность: {dataPoint.precipitationProbability}%</div>
-                    )}
-                    <div className="detail-text">{weatherCodes[dataPoint.weatherCode] || 'Неизвестно'}</div>
-                  </div>
-                ))}
-              </div>
-            </div>
-          )}
-
-          {ecmwfData && (
-            <div className="card" onClick={() => toggleDetailedView('ecmwf')}>
-              <h2 className="card-title">ECMWF AIFS</h2>
-              <div className="card-content">
-                <p className="temp">
-                  <span>{ecmwfData.compact.icon}</span>
-                  {ecmwfData.compact.temperature}
-                </p>
-                <p>{ecmwfData.compact.precipitation}</p>
-                <p>{ecmwfData.compact.condition}</p>
-              </div>
-              <div className={`detailed-view ${selectedSource === 'ecmwf' ? 'open' : ''}`}>
-                {ecmwfData.detailed.map((dataPoint, index) => (
-                  <div key={index} className="detail-item">
-                    <div className="detail-time">{dataPoint.time}</div>
-                    <div className="detail-temp">{dataPoint.temperature !== 'N/A' ? `${dataPoint.temperature}°C` : 'N/A'}</div>
-                    <div className="detail-text">Осадки: {dataPoint.precipitation} мм</div>
-                    {dataPoint.precipitationProbability !== null && (
-                      <div className="detail-text">Вероятность: {dataPoint.precipitationProbability}%</div>
-                    )}
-                    <div className="detail-text">{weatherCodes[dataPoint.weatherCode] || 'Неизвестно'}</div>
-                  </div>
-                ))}
-              </div>
-            </div>
-          )}
-        </div>
-      </div>
-    </>
+      <WeatherCard
+        title="Yandex"
+        data={yandexData}
+        source="yandex"
+        selectedSource={selectedSource}
+        toggleDetailedView={toggleDetailedView}
+      />
+      <WeatherCard
+        title="Best Match"
+        data={bestMatchData}
+        source="best_match"
+        selectedSource={selectedSource}
+        toggleDetailedView={toggleDetailedView}
+      />
+      <WeatherCard
+        title="ECMWF AIFS"
+        data={ecmwfData}
+        source="ecmwf"
+        selectedSource={selectedSource}
+        toggleDetailedView={toggleDetailedView}
+      />
+    </div>
   );
 }
