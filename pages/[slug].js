@@ -1,79 +1,52 @@
-import { useEffect, useState } from "react";
-import "../styles.css";
+import { useEffect, useState } from 'react'
 
 export default function WeatherPage() {
-  const [updateTime, setUpdateTime] = useState("");
-  const [bestMatchData, setBestMatchData] = useState(null);
-  const [ecmwfData, setEcmwfData] = useState(null);
-  const [yandexData, setYandexData] = useState(null);
+  const [data, setData] = useState(null)
+  const [updatedAt, setUpdatedAt] = useState(null)
 
   useEffect(() => {
-    const fetchWeatherData = async () => {
-      try {
-        const response = await fetch("/api/weather");
-        const data = await response.json();
-        if (!data) return;
+    async function fetchWeather() {
+      const res = await fetch('/api/weather')
+      const json = await res.json()
+      setData(json)
 
-        setUpdateTime(data.updateTime); // уже форматированное время
-
-        // --- OpenMeteo: берём первые 6 точек прогноза ---
-        if (data.openMeteo?.minutely_15) {
-          const times = data.openMeteo.minutely_15.time;
-          const temps = data.openMeteo.minutely_15.temperature_2m;
-          const prec = data.openMeteo.minutely_15.precipitation_probability;
-
-          const forecasts = times.slice(0, 6).map((t, i) => ({
-            time: t,
-            temperature: temps[i],
-            precipitation: prec[i],
-          }));
-
-          setBestMatchData(forecasts); // кладём в карточки
-        }
-
-        // --- Yandex ---
-        if (data.yandex) {
-          const forecasts = data.yandex.forecasts[0].hours.slice(0, 6).map((h) => ({
-            time: h.hour + ":00",
-            temperature: h.temp,
-            precipitation: h.prec_mm,
-          }));
-          setYandexData(forecasts);
-        }
-      } catch (error) {
-        console.error("Ошибка загрузки данных:", error);
-      }
-    };
-
-    fetchWeatherData();
-  }, []);
-
-  const renderForecastCards = (title, data) => (
-    <div className="forecast-section">
-      <h2>{title}</h2>
-      <div className="forecast-cards">
-        {data && data.length > 0 ? (
-          data.map((item, idx) => (
-            <div key={idx} className="card">
-              <p><strong>{item.time}</strong></p>
-              <p>{item.temperature}°C</p>
-              <p>Осадки: {item.precipitation ?? 0}%</p>
-            </div>
-          ))
-        ) : (
-          <p>Нет данных</p>
-        )}
-      </div>
-    </div>
-  );
+      // время обновления
+      setUpdatedAt(new Date().toLocaleString('ru-RU', { timeZone: 'Asia/Almaty' }))
+    }
+    fetchWeather()
+  }, [])
 
   return (
     <div className="container">
       <h1>Прогноз погоды Алматы</h1>
-      <p>Обновлено: {updateTime}</p>
+      <p className="updated">Обновлено: {updatedAt}</p>
 
-      {renderForecastCards("Open-Meteo (Best Match)", bestMatchData)}
-      {renderForecastCards("Yandex", yandexData)}
+      {data ? (
+        <div className="cards">
+          {/* --- Open-Meteo --- */}
+          {data.openMeteo && (
+            <div className="card">
+              <h2>Open-Meteo</h2>
+              <p>Температура: <b>{data.openMeteo.minutely_15?.temperature_2m?.[0]}°C</b></p>
+              <p>Вероятность осадков: <b>{data.openMeteo.minutely_15?.precipitation_probability?.[0]}%</b></p>
+              <p>Осадки: <b>{data.openMeteo.minutely_15?.precipitation?.[0]} мм</b></p>
+            </div>
+          )}
+
+          {/* --- Яндекс --- */}
+          {data.yandex && (
+            <div className="card">
+              <h2>Яндекс.Погода</h2>
+              <p>Температура: <b>{data.yandex.fact?.temp}°C</b></p>
+              <p>Ощущается как: <b>{data.yandex.fact?.feels_like}°C</b></p>
+              <p>Влажность: <b>{data.yandex.fact?.humidity}%</b></p>
+              <p>Давление: <b>{data.yandex.fact?.pressure_mm} мм рт. ст.</b></p>
+            </div>
+          )}
+        </div>
+      ) : (
+        <p>Загрузка...</p>
+      )}
     </div>
-  );
+  )
 }
