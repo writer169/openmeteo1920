@@ -1,73 +1,68 @@
 .container {
-  font-family: Arial, sans-serif;
   padding: 20px;
+  max-width: 800px;
+  margin: auto;
 }
 
 .header {
+  font-size: 28px;
   text-align: center;
-  margin-bottom: 20px;
+  margin-bottom: 10px;
 }
 
-.update {
+.updateTime {
   text-align: center;
-  font-size: 14px;
   margin-bottom: 20px;
+  color: #666;
 }
 
 .card {
   background: #f9f9f9;
   border-radius: 12px;
-  padding: 15px;
-  margin-bottom: 15px;
+  padding: 16px;
+  margin-bottom: 20px;
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.1);
   cursor: pointer;
-  transition: box-shadow 0.3s;
 }
 
-.card:hover {
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+.cardTitle {
+  font-size: 20px;
+  margin-bottom: 8px;
 }
 
-.card-title {
-  font-size: 18px;
-  margin-bottom: 10px;
-}
-
-.card-content {
+.cardContent {
   display: flex;
-  gap: 10px;
-  font-size: 16px;
+  flex-direction: column;
+  gap: 4px;
 }
 
 .temp {
-  font-size: 20px;
+  font-size: 24px;
   font-weight: bold;
 }
 
-.detailed-view {
-  display: none;
+.detailedView {
+  max-height: 0;
+  overflow: hidden;
+  transition: max-height 0.3s ease;
   margin-top: 10px;
 }
 
-.detailed-view.open {
-  display: block;
+.open {
+  max-height: 500px;
 }
 
-.detail-item {
+.detailItem {
   display: flex;
   justify-content: space-between;
-  padding: 5px 0;
+  padding: 4px 0;
   border-bottom: 1px solid #ddd;
 }
 
-.detail-time {
-  width: 60px;
+.detailTime {
+  font-weight: bold;
 }
 
-.detail-temp {
-  width: 60px;
-}
-
-.detail-text {
-  flex: 1;
-  text-align: left;
+.detailText {
+  color: #555;
 }
