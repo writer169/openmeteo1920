@@ -1,20 +1,29 @@
 // pages/api/weather.js
 export default async function handler(req, res) {
   try {
-    // Получаем текущую дату в часовом поясе Алматы
-    const almatyTime = new Date().toLocaleString("en-CA", {
-      timeZone: "Asia/Almaty",
-      year: "numeric",
-      month: "2-digit", 
-      day: "2-digit",
-      hour: "2-digit",
-      minute: "2-digit",
-      second: "2-digit"
-    });
+    // Получаем текущее время и создаем дату в часовом поясе Алматы
+    const now = new Date();
+    const almatyTime = new Intl.DateTimeFormat('en-CA', {
+      timeZone: 'Asia/Almaty',
+      year: 'numeric',
+      month: '2-digit',
+      day: '2-digit',
+      hour: '2-digit',
+      minute: '2-digit',
+      second: '2-digit',
+      hour12: false
+    }).formatToParts(now);
     
-    const serverTime = new Date(almatyTime.replace(',', '')).toISOString();
-    const today = serverTime.split('T')[0];
+    // Собираем ISO строку вручную
+    const year = almatyTime.find(part => part.type === 'year').value;
+    const month = almatyTime.find(part => part.type === 'month').value;
+    const day = almatyTime.find(part => part.type === 'day').value;
+    const hour = almatyTime.find(part => part.type === 'hour').value;
+    const minute = almatyTime.find(part => part.type === 'minute').value;
+    const second = almatyTime.find(part => part.type === 'second').value;
     
+    const serverTime = `${year}-${month}-${day}T${hour}:${minute}:${second}+06:00`;
+    const today = `${year}-${month}-${day}`;
     // Создаем массив промисов для параллельного запроса данных
     const weatherPromises = [];
     
@@ -23,7 +32,7 @@ export default async function handler(req, res) {
     
     weatherPromises.push(
       fetch(openMeteoUrl, {
-        timeout: 10000, // 10 секунд таймаут
+        signal: AbortSignal.timeout(10000), // 10 секунд таймаут
       }).then(response => {
         if (!response.ok) throw new Error(`Open-Meteo API error: ${response.status}`);
         return response.json();
@@ -40,7 +49,7 @@ export default async function handler(req, res) {
           headers: {
             'X-Yandex-Weather-Key': process.env.YANDEX_WEATHER_KEY
           },
-          timeout: 10000,
+          signal: AbortSignal.timeout(10000),
         }).then(response => {
           if (!response.ok) throw new Error(`Yandex API error: ${response.status}`);
           return response.json();
@@ -69,16 +78,20 @@ export default async function handler(req, res) {
     res.status(200).json({
       openMeteo: openMeteoData,
       yandex: yandexData,
-      serverTime: serverTime, // Время сервера в ISO формате
+      serverTime: serverTime, // Время сервера в ISO формате с таймзоной
       location: 'Almaty, Kazakhstan'
     });
     
   } catch (error) {
     console.error('Weather API error:', error);
+    
+    // Создаем fallback время в случае ошибки
+    const fallbackTime = new Date().toISOString();
+    
     res.status(500).json({ 
       error: 'Failed to fetch weather data',
       message: error.message,
-      serverTime: new Date().toISOString()
+      serverTime: fallbackTime
     });
   }
 }
