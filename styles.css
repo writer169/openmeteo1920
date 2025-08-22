@@ -1,0 +1,32 @@
+.container {
+  max-width: 800px;
+  margin: 0 auto;
+  padding: 20px;
+  font-family: sans-serif;
+}
+
+h1 {
+  text-align: center;
+}
+
+p {
+  margin: 5px 0;
+}
+
+.forecast-section {
+  margin-top: 20px;
+}
+
+.forecast-cards {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(120px, 1fr));
+  gap: 12px;
+}
+
+.card {
+  background: #f9f9f9;
+  border-radius: 12px;
+  padding: 10px;
+  text-align: center;
+  box-shadow: 0 2px 6px rgba(0,0,0,0.1);
+}
