@@ -2,15 +2,19 @@
 
 export const weatherStyles = `
   .container {
-    min-height: 100vh;
-    min-height: 100svh; /* Small viewport height - учитывает адресную строку */
-    min-height: 100dvh; /* Dynamic viewport height - адаптируется к изменениям */
+    height: 100vh;
+    height: 100svh; /* Small viewport height - учитывает адресную строку */
+    height: 100dvh; /* Dynamic viewport height - адаптируется к изменениям */
+    max-height: 100vh;
+    max-height: 100svh;
+    max-height: 100dvh;
     background: #e5e7eb;
     border-radius: 1rem;
     padding: 0rem;
     display: flex;
     flex-direction: column;
     box-sizing: border-box;
+    overflow: hidden; /* Предотвращаем переполнение контейнера */
   }
 
   .main {
@@ -19,8 +23,10 @@ export const weatherStyles = `
     flex: 1;
     display: flex;
     flex-direction: column;
-    padding: 0.5rem 0.5rem 1.5rem 0.5rem; /* Добавлен нижний отступ */
+    padding: 0.5rem 0.5rem 0.5rem 0.5rem; /* Убрали увеличенный нижний отступ */
     box-sizing: border-box;
+    overflow-y: auto; /* Добавляем прокрутку если контент не влазит */
+    min-height: 0; /* Позволяет flex-элементу сжиматься */
   }
 
   .header {
@@ -82,6 +88,10 @@ export const weatherStyles = `
 
   .card:hover {
     transform: scale(1.02);
+  }
+
+  .card:last-child {
+    margin-bottom: 1.5rem; /* Дополнительный отступ только у последней карточки */
   }
 
   .card-title {
@@ -173,7 +183,7 @@ export const weatherStyles = `
     
     .main {
       max-width: 100%;
-      padding: 0.25rem 0.25rem 2rem 0.25rem; /* Увеличен нижний отступ на мобильных */
+      padding: 0.25rem; /* Возвращаем обычный отступ */
     }
 
     .header {
@@ -216,21 +226,24 @@ export const weatherStyles = `
     .detailed-view .detail-text {
       font-size: 0.75rem;
     }
+
+    .card:last-child {
+      margin-bottom: 2rem; /* Больший отступ на мобильных */
+    }
   }
 `;
 
 export const loadingStyles = `
   .loading {
-    min-height: 100vh;
-    min-height: 100svh; /* Small viewport height */
-    min-height: 100dvh; /* Dynamic viewport height */
+    height: 100vh;
+    height: 100svh; /* Small viewport height */
+    height: 100dvh; /* Dynamic viewport height */
     background: #e5e7eb;
     border-radius: 1rem;
     display: flex;
     align-items: center;
     justify-content: center;
     box-sizing: border-box;
-    padding-bottom: 2rem; /* Добавлен нижний отступ */
   }
 
   .loading-content {
@@ -270,15 +283,15 @@ export const loadingStyles = `
 
 export const errorStyles = `
   .error {
-    min-height: 100vh;
-    min-height: 100svh; /* Small viewport height */
-    min-height: 100dvh; /* Dynamic viewport height */
+    height: 100vh;
+    height: 100svh; /* Small viewport height */
+    height: 100dvh; /* Dynamic viewport height */
     background: #fee2e2;
     border-radius: 1rem;
     display: flex;
     align-items: center;
     justify-content: center;
-    padding: 1rem 1rem 2rem 1rem; /* Добавлен нижний отступ */
+    padding: 1rem;
     box-sizing: border-box;
   }
 
