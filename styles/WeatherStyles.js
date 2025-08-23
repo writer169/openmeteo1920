@@ -2,12 +2,12 @@
 
 export const weatherStyles = `
   .container {
-    height: calc(100vh - 35px);
-    height: calc(100svh - 35px); /* Small viewport height - учитывает адресную строку */
-    height: calc(100dvh - 35px); /* Dynamic viewport height - адаптируется к изменениям */
-    max-height: calc(100vh - 35px);
-    max-height: calc(100svh - 35px);
-    max-height: calc(100dvh - 35px);
+    height: 90vh;
+    height: 90svh; /* Small viewport height - учитывает адресную строку */
+    height: 90dvh; /* Dynamic viewport height - адаптируется к изменениям */
+    max-height: 90vh;
+    max-height: 90svh;
+    max-height: 90dvh;
     background: #e5e7eb;
     border-radius: 1rem;
     padding: 0rem;
@@ -15,6 +15,7 @@ export const weatherStyles = `
     flex-direction: column;
     box-sizing: border-box;
     overflow: hidden; /* Предотвращаем переполнение контейнера */
+    margin: 5vh auto; /* Центрируем по вертикали */
   }
 
   .main {
@@ -235,15 +236,16 @@ export const weatherStyles = `
 
 export const loadingStyles = `
   .loading {
-    height: calc(100vh - 5px);
-    height: calc(100svh - 5px); /* Small viewport height */
-    height: calc(100dvh - 5px); /* Dynamic viewport height */
+    height: 90vh;
+    height: 90svh; /* Small viewport height */
+    height: 90dvh; /* Dynamic viewport height */
     background: #e5e7eb;
     border-radius: 1rem;
     display: flex;
     align-items: center;
     justify-content: center;
     box-sizing: border-box;
+    margin: 5vh auto; /* Центрируем по вертикали */
   }
 
   .loading-content {
@@ -283,9 +285,9 @@ export const loadingStyles = `
 
 export const errorStyles = `
   .error {
-    height: calc(100vh - 5px);
-    height: calc(100svh - 5px); /* Small viewport height */
-    height: calc(100dvh - 5px); /* Dynamic viewport height */
+    height: 90vh;
+    height: 90svh; /* Small viewport height */
+    height: 90dvh; /* Dynamic viewport height */
     background: #fee2e2;
     border-radius: 1rem;
     display: flex;
@@ -293,6 +295,7 @@ export const errorStyles = `
     justify-content: center;
     padding: 1rem;
     box-sizing: border-box;
+    margin: 5vh auto; /* Центрируем по вертикали */
   }
 
   .error-content {
