@@ -1,9 +1,11 @@
 // utils/weatherUtils.js
 import { WEATHER_CODES, YANDEX_CONDITIONS, MONTHS, getWeatherIcon, getYandexIcon } from '../constants/weather';
 
-export const formatUpdateTime = (date) => {
-  if (!date) return 'Неизвестно';
+export const formatUpdateTime = (timestamp) => {
+  if (!timestamp) return 'Неизвестно';
   
+  // Создаем дату из timestamp и форматируем в UTC+6
+  const date = new Date(timestamp);
   const day = date.getDate();
   const month = MONTHS[date.getMonth()];
   const hours = date.getHours().toString().padStart(2, '0');
@@ -121,7 +123,7 @@ export const formatYandexData = (data) => {
 };
 
 export const fetchWeatherWithTimeout = async (controller) => {
-  const timeoutId = setTimeout(() => controller.abort(), 15000);
+  const timeoutId = setTimeout(() => controller.abort(), 25000); // Увеличиваем до 25 секунд
   
   try {
     const response = await fetch('/api/weather', {
