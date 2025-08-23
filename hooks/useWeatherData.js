@@ -10,9 +10,9 @@ export const useWeatherData = () => {
   const [lastFetchTime, setLastFetchTime] = useState(null);
 
   const fetchWeatherData = useCallback(async () => {
-    // Проверяем, не слишком ли часто происходят запросы (минимум 30 секунд между запросами)
-    if (lastFetchTime && Date.now() - lastFetchTime < 30000) {
-      console.log('Запрос заблокирован - слишком частые обновления');
+    // Проверяем, не слишком ли часто происходят запросы (минимум 10 секунд между запросами)
+    if (lastFetchTime && Date.now() - lastFetchTime < 10000) {
+      setError('Подождите 10 секунд между обновлениями');
       return;
     }
 
@@ -24,9 +24,11 @@ export const useWeatherData = () => {
       const controller = new AbortController();
       const data = await fetchWeatherWithTimeout(controller);
       
+      console.log('Полученные данные:', data); // Для отладки
+      
       setWeatherData(data);
-      // Используем serverTimestamp напрямую как timestamp
-      setServerTime(data.serverTimestamp ? data.serverTimestamp : Date.now());
+      // Используем готовую строку времени с сервера
+      setServerTime(data.formattedTime);
       
     } catch (err) {
       console.error('Weather fetch error:', err);
@@ -38,18 +40,21 @@ export const useWeatherData = () => {
     } finally {
       setLoading(false);
     }
-  }, [lastFetchTime]);
+  }, []); // Убираем lastFetchTime из зависимостей
 
   useEffect(() => {
     fetchWeatherData();
-  }, []);
+  }, [fetchWeatherData]);
 
   // Безопасный refetch с проверкой частоты
   const safeRefetch = useCallback(() => {
-    if (lastFetchTime && Date.now() - lastFetchTime < 30000) {
-      setError('Подождите 30 секунд между обновлениями');
+    if (lastFetchTime && Date.now() - lastFetchTime < 10000) {
+      setError('Подождите 10 секунд между обновлениями');
       return;
     }
+    
+    // Сбрасываем ошибку перед новым запросом
+    setError(null);
     fetchWeatherData();
   }, [fetchWeatherData, lastFetchTime]);
 
