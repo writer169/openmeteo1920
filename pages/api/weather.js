@@ -1,38 +1,22 @@
 // pages/api/weather.js
 export default async function handler(req, res) {
   try {
-    // Получаем текущее время и создаем дату в часовом поясе Алматы
+    // Получаем текущее время в UTC+6 (Алматы) и передаем как timestamp
     const now = new Date();
-    const almatyTime = new Intl.DateTimeFormat('en-CA', {
-      timeZone: 'Asia/Almaty',
-      year: 'numeric',
-      month: '2-digit',
-      day: '2-digit',
-      hour: '2-digit',
-      minute: '2-digit',
-      second: '2-digit',
-      hour12: false
-    }).formatToParts(now);
+    const almatyTime = new Date(now.getTime() + (6 * 60 * 60 * 1000)); // UTC+6
+    const serverTimestamp = almatyTime.getTime(); // Передаем как timestamp
     
-    // Собираем ISO строку вручную
-    const year = almatyTime.find(part => part.type === 'year').value;
-    const month = almatyTime.find(part => part.type === 'month').value;
-    const day = almatyTime.find(part => part.type === 'day').value;
-    const hour = almatyTime.find(part => part.type === 'hour').value;
-    const minute = almatyTime.find(part => part.type === 'minute').value;
-    const second = almatyTime.find(part => part.type === 'second').value;
+    const today = almatyTime.toISOString().split('T')[0]; // YYYY-MM-DD
     
-    const serverTime = `${year}-${month}-${day}T${hour}:${minute}:${second}+06:00`;
-    const today = `${year}-${month}-${day}`;
     // Создаем массив промисов для параллельного запроса данных
     const weatherPromises = [];
     
-    // Open-Meteo запрос
+    // Open-Meteo запрос с увеличенным таймаутом
     const openMeteoUrl = `https://api.open-meteo.com/v1/forecast?latitude=43.25&longitude=76.92&timezone=Asia/Almaty&start_hour=${today}T19:00&end_hour=${today}T19:00&minutely_15=temperature_2m,precipitation_probability,precipitation,weather_code&models=best_match,ecmwf_aifs025_single`;
     
     weatherPromises.push(
       fetch(openMeteoUrl, {
-        signal: AbortSignal.timeout(10000), // 10 секунд таймаут
+        signal: AbortSignal.timeout(20000), // Увеличиваем до 20 секунд
       }).then(response => {
         if (!response.ok) throw new Error(`Open-Meteo API error: ${response.status}`);
         return response.json();
@@ -42,14 +26,14 @@ export default async function handler(req, res) {
       })
     );
     
-    // Yandex запрос
+    // Yandex запрос с увеличенным таймаутом
     if (process.env.YANDEX_WEATHER_KEY && process.env.YANDEX_WEATHER_KEY !== 'YANDEX_KEY') {
       weatherPromises.push(
         fetch('https://api.weather.yandex.ru/v2/forecast?lat=43.23&lon=76.86', {
           headers: {
             'X-Yandex-Weather-Key': process.env.YANDEX_WEATHER_KEY
           },
-          signal: AbortSignal.timeout(10000),
+          signal: AbortSignal.timeout(20000), // Увеличиваем до 20 секунд
         }).then(response => {
           if (!response.ok) throw new Error(`Yandex API error: ${response.status}`);
           return response.json();
@@ -69,29 +53,29 @@ export default async function handler(req, res) {
     if (!openMeteoData && !yandexData) {
       return res.status(503).json({ 
         error: 'All weather services unavailable',
-        serverTime: serverTime
+        serverTimestamp: serverTimestamp
       });
     }
     
-    res.setHeader('Cache-Control', 'public, max-age=900'); // Кэш на 15 минут
+    res.setHeader('Cache-Control', 'public, max-age=600'); // Уменьшаем кэш до 10 минут
     
     res.status(200).json({
       openMeteo: openMeteoData,
       yandex: yandexData,
-      serverTime: serverTime, // Время сервера в ISO формате с таймзоной
+      serverTimestamp: serverTimestamp, // Передаем timestamp вместо строки
       location: 'Almaty, Kazakhstan'
     });
     
   } catch (error) {
     console.error('Weather API error:', error);
     
-    // Создаем fallback время в случае ошибки
-    const fallbackTime = new Date().toISOString();
+    // Создаем fallback timestamp
+    const fallbackTime = new Date().getTime();
     
     res.status(500).json({ 
       error: 'Failed to fetch weather data',
       message: error.message,
-      serverTime: fallbackTime
+      serverTimestamp: fallbackTime
     });
   }
 }
