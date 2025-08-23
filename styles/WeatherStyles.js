@@ -2,12 +2,15 @@
 
 export const weatherStyles = `
   .container {
-    height: 100dvh;
+    min-height: 100vh;
+    min-height: 100svh; /* Small viewport height - учитывает адресную строку */
+    min-height: 100dvh; /* Dynamic viewport height - адаптируется к изменениям */
     background: #e5e7eb;
     border-radius: 1rem;
     padding: 0rem;
     display: flex;
     flex-direction: column;
+    box-sizing: border-box;
   }
 
   .main {
@@ -16,6 +19,8 @@ export const weatherStyles = `
     flex: 1;
     display: flex;
     flex-direction: column;
+    padding: 0.5rem;
+    box-sizing: border-box;
   }
 
   .header {
@@ -72,6 +77,7 @@ export const weatherStyles = `
     margin-bottom: 1rem;
     cursor: pointer;
     transition: transform 0.2s;
+    box-sizing: border-box;
   }
 
   .card:hover {
@@ -160,8 +166,18 @@ export const weatherStyles = `
   }
 
   @media (max-width: 480px) {
+    .container {
+      padding: 0;
+      border-radius: 0; /* Убираем скругления на мобильных для лучшего использования пространства */
+    }
+    
     .main {
       max-width: 100%;
+      padding: 0.25rem;
+    }
+
+    .header {
+      margin-bottom: 1rem;
     }
 
     .title {
@@ -170,6 +186,11 @@ export const weatherStyles = `
 
     .update-time {
       font-size: 0.6875rem;
+    }
+
+    .card {
+      margin-bottom: 0.75rem;
+      padding: 1rem;
     }
 
     .card-content .temp {
@@ -201,11 +222,14 @@ export const weatherStyles = `
 export const loadingStyles = `
   .loading {
     min-height: 100vh;
+    min-height: 100svh; /* Small viewport height */
+    min-height: 100dvh; /* Dynamic viewport height */
     background: #e5e7eb;
     border-radius: 1rem;
     display: flex;
     align-items: center;
     justify-content: center;
+    box-sizing: border-box;
   }
 
   .loading-content {
@@ -235,17 +259,26 @@ export const loadingStyles = `
   @keyframes spin {
     to { transform: rotate(360deg); }
   }
+
+  @media (max-width: 480px) {
+    .loading {
+      border-radius: 0;
+    }
+  }
 `;
 
 export const errorStyles = `
   .error {
     min-height: 100vh;
+    min-height: 100svh; /* Small viewport height */
+    min-height: 100dvh; /* Dynamic viewport height */
     background: #fee2e2;
     border-radius: 1rem;
     display: flex;
     align-items: center;
     justify-content: center;
     padding: 1rem;
+    box-sizing: border-box;
   }
 
   .error-content {
@@ -272,5 +305,11 @@ export const errorStyles = `
 
   .retry-button:hover {
     background: #dc2626;
+  }
+
+  @media (max-width: 480px) {
+    .error {
+      border-radius: 0;
+    }
   }
 `;
