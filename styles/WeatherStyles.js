@@ -2,12 +2,12 @@
 
 export const weatherStyles = `
   .container {
-    height: 100vh;
-    height: 100svh; /* Small viewport height - учитывает адресную строку */
-    height: 100dvh; /* Dynamic viewport height - адаптируется к изменениям */
-    max-height: 100vh;
-    max-height: 100svh;
-    max-height: 100dvh;
+    height: calc(100vh - 5px);
+    height: calc(100svh - 5px); /* Small viewport height - учитывает адресную строку */
+    height: calc(100dvh - 5px); /* Dynamic viewport height - адаптируется к изменениям */
+    max-height: calc(100vh - 5px);
+    max-height: calc(100svh - 5px);
+    max-height: calc(100dvh - 5px);
     background: #e5e7eb;
     border-radius: 1rem;
     padding: 0rem;
@@ -235,9 +235,9 @@ export const weatherStyles = `
 
 export const loadingStyles = `
   .loading {
-    height: 100vh;
-    height: 100svh; /* Small viewport height */
-    height: 100dvh; /* Dynamic viewport height */
+    height: calc(100vh - 5px);
+    height: calc(100svh - 5px); /* Small viewport height */
+    height: calc(100dvh - 5px); /* Dynamic viewport height */
     background: #e5e7eb;
     border-radius: 1rem;
     display: flex;
@@ -283,9 +283,9 @@ export const loadingStyles = `
 
 export const errorStyles = `
   .error {
-    height: 100vh;
-    height: 100svh; /* Small viewport height */
-    height: 100dvh; /* Dynamic viewport height */
+    height: calc(100vh - 5px);
+    height: calc(100svh - 5px); /* Small viewport height */
+    height: calc(100dvh - 5px); /* Dynamic viewport height */
     background: #fee2e2;
     border-radius: 1rem;
     display: flex;
