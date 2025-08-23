@@ -10,7 +10,7 @@ export const weatherStyles = `
     max-height: 100dvh;
     background: #e5e7eb;
     border-radius: 1rem;
-    padding: 0rem;
+    padding: 1rem 0 3rem 0; /* Отступы сверху и снизу внутри серого контейнера */
     display: flex;
     flex-direction: column;
     box-sizing: border-box;
@@ -23,11 +23,10 @@ export const weatherStyles = `
     flex: 1;
     display: flex;
     flex-direction: column;
-    padding: 0.5rem 0.5rem 0.5rem 0.5rem;
+    padding: 0 0.5rem 0 0.5rem; /* Убрали вертикальные отступы, так как они теперь в container */
     box-sizing: border-box;
     overflow-y: auto; /* Добавляем прокрутку если контент не влазит */
     min-height: 0; /* Позволяет flex-элементу сжиматься */
-    max-height: 90%; /* Ограничиваем высоту содержимого */
   }
 
   .header {
@@ -178,13 +177,13 @@ export const weatherStyles = `
 
   @media (max-width: 480px) {
     .container {
-      padding: 0;
+      padding: 0.5rem 0 2.5rem 0; /* Меньше отступы на мобильных */
       border-radius: 0; /* Убираем скругления на мобильных для лучшего использования пространства */
     }
     
     .main {
       max-width: 100%;
-      padding: 0.25rem; /* Возвращаем обычный отступ */
+      padding: 0 0.25rem 0 0.25rem; /* Только боковые отступы */
     }
 
     .header {
