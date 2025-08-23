@@ -2,12 +2,12 @@
 
 export const weatherStyles = `
   .container {
-    height: calc(100vh - 5px);
-    height: calc(100svh - 5px); /* Small viewport height - учитывает адресную строку */
-    height: calc(100dvh - 5px); /* Dynamic viewport height - адаптируется к изменениям */
-    max-height: calc(100vh - 5px);
-    max-height: calc(100svh - 5px);
-    max-height: calc(100dvh - 5px);
+    height: calc(100vh - 35px);
+    height: calc(100svh - 35px); /* Small viewport height - учитывает адресную строку */
+    height: calc(100dvh - 35px); /* Dynamic viewport height - адаптируется к изменениям */
+    max-height: calc(100vh - 35px);
+    max-height: calc(100svh - 35px);
+    max-height: calc(100dvh - 35px);
     background: #e5e7eb;
     border-radius: 1rem;
     padding: 0rem;
