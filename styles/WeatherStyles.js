@@ -19,7 +19,7 @@ export const weatherStyles = `
     flex: 1;
     display: flex;
     flex-direction: column;
-    padding: 0.5rem;
+    padding: 0.5rem 0.5rem 1.5rem 0.5rem; /* Добавлен нижний отступ */
     box-sizing: border-box;
   }
 
@@ -173,7 +173,7 @@ export const weatherStyles = `
     
     .main {
       max-width: 100%;
-      padding: 0.25rem;
+      padding: 0.25rem 0.25rem 2rem 0.25rem; /* Увеличен нижний отступ на мобильных */
     }
 
     .header {
@@ -230,6 +230,7 @@ export const loadingStyles = `
     align-items: center;
     justify-content: center;
     box-sizing: border-box;
+    padding-bottom: 2rem; /* Добавлен нижний отступ */
   }
 
   .loading-content {
@@ -277,7 +278,7 @@ export const errorStyles = `
     display: flex;
     align-items: center;
     justify-content: center;
-    padding: 1rem;
+    padding: 1rem 1rem 2rem 1rem; /* Добавлен нижний отступ */
     box-sizing: border-box;
   }
 
