@@ -2,12 +2,12 @@
 
 export const weatherStyles = `
   .container {
-    height: 90vh;
-    height: 90svh; /* Small viewport height - учитывает адресную строку */
-    height: 90dvh; /* Dynamic viewport height - адаптируется к изменениям */
-    max-height: 90vh;
-    max-height: 90svh;
-    max-height: 90dvh;
+    height: 100vh;
+    height: 100svh; /* Small viewport height - учитывает адресную строку */
+    height: 100dvh; /* Dynamic viewport height - адаптируется к изменениям */
+    max-height: 100vh;
+    max-height: 100svh;
+    max-height: 100dvh;
     background: #e5e7eb;
     border-radius: 1rem;
     padding: 0rem;
@@ -15,7 +15,6 @@ export const weatherStyles = `
     flex-direction: column;
     box-sizing: border-box;
     overflow: hidden; /* Предотвращаем переполнение контейнера */
-    margin: 5vh auto; /* Центрируем по вертикали */
   }
 
   .main {
@@ -24,10 +23,11 @@ export const weatherStyles = `
     flex: 1;
     display: flex;
     flex-direction: column;
-    padding: 0.5rem 0.5rem 0.5rem 0.5rem; /* Убрали увеличенный нижний отступ */
+    padding: 0.5rem 0.5rem 0.5rem 0.5rem;
     box-sizing: border-box;
     overflow-y: auto; /* Добавляем прокрутку если контент не влазит */
     min-height: 0; /* Позволяет flex-элементу сжиматься */
+    max-height: 90%; /* Ограничиваем высоту содержимого */
   }
 
   .header {
@@ -236,16 +236,15 @@ export const weatherStyles = `
 
 export const loadingStyles = `
   .loading {
-    height: 90vh;
-    height: 90svh; /* Small viewport height */
-    height: 90dvh; /* Dynamic viewport height */
+    height: 100vh;
+    height: 100svh; /* Small viewport height */
+    height: 100dvh; /* Dynamic viewport height */
     background: #e5e7eb;
     border-radius: 1rem;
     display: flex;
     align-items: center;
     justify-content: center;
     box-sizing: border-box;
-    margin: 5vh auto; /* Центрируем по вертикали */
   }
 
   .loading-content {
@@ -285,9 +284,9 @@ export const loadingStyles = `
 
 export const errorStyles = `
   .error {
-    height: 90vh;
-    height: 90svh; /* Small viewport height */
-    height: 90dvh; /* Dynamic viewport height */
+    height: 100vh;
+    height: 100svh; /* Small viewport height */
+    height: 100dvh; /* Dynamic viewport height */
     background: #fee2e2;
     border-radius: 1rem;
     display: flex;
@@ -295,7 +294,6 @@ export const errorStyles = `
     justify-content: center;
     padding: 1rem;
     box-sizing: border-box;
-    margin: 5vh auto; /* Центрируем по вертикали */
   }
 
   .error-content {
