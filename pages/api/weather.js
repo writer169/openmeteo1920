@@ -1,34 +1,97 @@
 // pages/api/weather.js
 export default async function handler(req, res) {
   try {
-    const today = new Date().toISOString().split('T')[0];
-    const openMeteoUrl = `https://api.open-meteo.com/v1/forecast?latitude=43.25&longitude=76.92&timezone=auto&start_hour=${today}T19:00&end_hour=${today}T19:00&minutely_15=temperature_2m,precipitation_probability,precipitation,weather_code&models=best_match,ecmwf_aifs025_single`;
+    // Получаем текущее время и создаем дату в часовом поясе Алматы
+    const now = new Date();
+    const almatyTime = new Intl.DateTimeFormat('en-CA', {
+      timeZone: 'Asia/Almaty',
+      year: 'numeric',
+      month: '2-digit',
+      day: '2-digit',
+      hour: '2-digit',
+      minute: '2-digit',
+      second: '2-digit',
+      hour12: false
+    }).formatToParts(now);
     
-    // Fetch Open-Meteo data
-    const openMeteoResponse = await fetch(openMeteoUrl);
-    const openMeteoData = await openMeteoResponse.json();
+    // Собираем ISO строку вручную
+    const year = almatyTime.find(part => part.type === 'year').value;
+    const month = almatyTime.find(part => part.type === 'month').value;
+    const day = almatyTime.find(part => part.type === 'day').value;
+    const hour = almatyTime.find(part => part.type === 'hour').value;
+    const minute = almatyTime.find(part => part.type === 'minute').value;
+    const second = almatyTime.find(part => part.type === 'second').value;
     
-    // Fetch Yandex data
-    let yandexData = null;
-    try {
-      const yandexResponse = await fetch('https://api.weather.yandex.ru/v2/forecast?lat=43.23&lon=76.86', {
-        headers: {
-          'X-Yandex-Weather-Key': process.env.YANDEX_WEATHER_KEY || 'YANDEX_KEY'
-        }
-      });
-      
-      if (yandexResponse.ok) {
-        yandexData = await yandexResponse.json();
-      }
-    } catch (yandexError) {
-      console.warn('Failed to fetch Yandex weather data:', yandexError);
+    const serverTime = `${year}-${month}-${day}T${hour}:${minute}:${second}+06:00`;
+    const today = `${year}-${month}-${day}`;
+    // Создаем массив промисов для параллельного запроса данных
+    const weatherPromises = [];
+    
+    // Open-Meteo запрос
+    const openMeteoUrl = `https://api.open-meteo.com/v1/forecast?latitude=43.25&longitude=76.92&timezone=Asia/Almaty&start_hour=${today}T19:00&end_hour=${today}T19:00&minutely_15=temperature_2m,precipitation_probability,precipitation,weather_code&models=best_match,ecmwf_aifs025_single`;
+    
+    weatherPromises.push(
+      fetch(openMeteoUrl, {
+        signal: AbortSignal.timeout(10000), // 10 секунд таймаут
+      }).then(response => {
+        if (!response.ok) throw new Error(`Open-Meteo API error: ${response.status}`);
+        return response.json();
+      }).catch(error => {
+        console.warn('Failed to fetch Open-Meteo data:', error);
+        return null;
+      })
+    );
+    
+    // Yandex запрос
+    if (process.env.YANDEX_WEATHER_KEY && process.env.YANDEX_WEATHER_KEY !== 'YANDEX_KEY') {
+      weatherPromises.push(
+        fetch('https://api.weather.yandex.ru/v2/forecast?lat=43.23&lon=76.86', {
+          headers: {
+            'X-Yandex-Weather-Key': process.env.YANDEX_WEATHER_KEY
+          },
+          signal: AbortSignal.timeout(10000),
+        }).then(response => {
+          if (!response.ok) throw new Error(`Yandex API error: ${response.status}`);
+          return response.json();
+        }).catch(error => {
+          console.warn('Failed to fetch Yandex weather data:', error);
+          return null;
+        })
+      );
+    } else {
+      weatherPromises.push(Promise.resolve(null));
     }
+    
+    // Ожидаем все запросы параллельно
+    const [openMeteoData, yandexData] = await Promise.all(weatherPromises);
+    
+    // Проверяем, что хотя бы один источник данных доступен
+    if (!openMeteoData && !yandexData) {
+      return res.status(503).json({ 
+        error: 'All weather services unavailable',
+        serverTime: serverTime
+      });
+    }
+    
+    res.setHeader('Cache-Control', 'public, max-age=900'); // Кэш на 15 минут
     
     res.status(200).json({
       openMeteo: openMeteoData,
-      yandex: yandexData
+      yandex: yandexData,
+      serverTime: serverTime, // Время сервера в ISO формате с таймзоной
+      location: 'Almaty, Kazakhstan'
     });
+    
   } catch (error) {
-    res.status(500).json({ error: 'Failed to fetch weather data' });
+    console.error('Weather API error:', error);
+    
+    // Создаем fallback время в случае ошибки
+    const fallbackTime = new Date().toISOString();
+    
+    res.status(500).json({ 
+      error: 'Failed to fetch weather data',
+      message: error.message,
+      serverTime: fallbackTime
+    });
   }
 }
