@@ -2,7 +2,7 @@
 
 export const weatherStyles = `
   .container {
-    min-height: auto;
+    height: 100dvh;
     background: #e5e7eb;
     border-radius: 1rem;
     padding: 0rem;
