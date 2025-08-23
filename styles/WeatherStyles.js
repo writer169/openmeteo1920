@@ -1,6 +1,6 @@
 export const weatherStyles = `
   .container {
-    min-height: calc(100vh - 3rem); /* Учитываем адресную строку (~3rem) */
+    min-height: calc(100vh - 3.5rem); /* Учитываем адресную строку (~3rem) */
     background: #e5e7eb;
     border-radius: 1rem;
     padding: 0.5rem; /* Уменьшено с 0rem */
@@ -33,7 +33,7 @@ export const weatherStyles = `
   }
 
   .update-time {
-    font-size: 0.7rem; /* Уменьшено с 0.75rem */
+    font-size: 0.75rem; /* Уменьшено с 0.75rem */
     color: #6b7280;
     font-family: 'Inter', sans-serif;
     margin: 0 0 0.4rem 0; /* Уменьшено с 0.5rem */
@@ -108,7 +108,7 @@ export const weatherStyles = `
 
   .card-content p {
     color: #4b5563;
-    font-size: 0.8rem; /* Уменьшено с 0.875rem */
+    font-size: 1rem; /* Уменьшено с 0.875rem */
     line-height: 1.4; /* Уменьшено с 1.5 */
     margin: 0.2rem 0; /* Уменьшено с 0.25rem */
     font-family: 'Inter', sans-serif;
@@ -176,7 +176,7 @@ export const weatherStyles = `
     }
 
     .card-content p {
-      font-size: 0.75rem; /* Уменьшено с 0.8125rem */
+      font-size: 0.8rem; /* Уменьшено с 0.8125rem */
     }
 
     .card-title {
