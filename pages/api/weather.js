@@ -3,7 +3,7 @@ export default async function handler(req, res) {
   try {
     // Получаем текущее время в UTC+6 (Алматы)
     const now = new Date();
-    const almatyTime = new Date(now.getTime() + (6 * 60 * 60 * 1000));
+    const almatyTime = new Date(now.getTime() + (5 * 60 * 60 * 1000));
     
     // Форматируем время сразу на сервере
     const day = almatyTime.getDate();
