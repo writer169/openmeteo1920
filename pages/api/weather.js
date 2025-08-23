@@ -1,11 +1,21 @@
 // pages/api/weather.js
 export default async function handler(req, res) {
   try {
-    // Получаем текущее время в UTC+6 (Алматы) и передаем как timestamp
+    // Получаем текущее время в UTC+6 (Алматы)
     const now = new Date();
-    const almatyTime = new Date(now.getTime() + (6 * 60 * 60 * 1000)); // UTC+6
-    const serverTimestamp = almatyTime.getTime(); // Передаем как timestamp
+    const almatyTime = new Date(now.getTime() + (6 * 60 * 60 * 1000));
     
+    // Форматируем время сразу на сервере
+    const day = almatyTime.getDate();
+    const monthNames = [
+      'января', 'февраля', 'марта', 'апреля', 'мая', 'июня',
+      'июля', 'августа', 'сентября', 'октября', 'ноября', 'декабря'
+    ];
+    const month = monthNames[almatyTime.getMonth()];
+    const hours = almatyTime.getHours().toString().padStart(2, '0');
+    const minutes = almatyTime.getMinutes().toString().padStart(2, '0');
+    
+    const formattedTime = `${day} ${month} ${hours}:${minutes}`;
     const today = almatyTime.toISOString().split('T')[0]; // YYYY-MM-DD
     
     // Создаем массив промисов для параллельного запроса данных
@@ -16,7 +26,7 @@ export default async function handler(req, res) {
     
     weatherPromises.push(
       fetch(openMeteoUrl, {
-        signal: AbortSignal.timeout(20000), // Увеличиваем до 20 секунд
+        signal: AbortSignal.timeout(20000), // 20 секунд таймаут
       }).then(response => {
         if (!response.ok) throw new Error(`Open-Meteo API error: ${response.status}`);
         return response.json();
@@ -33,7 +43,7 @@ export default async function handler(req, res) {
           headers: {
             'X-Yandex-Weather-Key': process.env.YANDEX_WEATHER_KEY
           },
-          signal: AbortSignal.timeout(20000), // Увеличиваем до 20 секунд
+          signal: AbortSignal.timeout(20000), // 20 секунд таймаут
         }).then(response => {
           if (!response.ok) throw new Error(`Yandex API error: ${response.status}`);
           return response.json();
@@ -53,29 +63,32 @@ export default async function handler(req, res) {
     if (!openMeteoData && !yandexData) {
       return res.status(503).json({ 
         error: 'All weather services unavailable',
-        serverTimestamp: serverTimestamp
+        formattedTime: formattedTime
       });
     }
     
-    res.setHeader('Cache-Control', 'public, max-age=600'); // Уменьшаем кэш до 10 минут
+    // Устанавливаем заголовки кэширования
+    res.setHeader('Cache-Control', 'public, max-age=300, stale-while-revalidate=600'); // 5 минут кэш
     
     res.status(200).json({
       openMeteo: openMeteoData,
       yandex: yandexData,
-      serverTimestamp: serverTimestamp, // Передаем timestamp вместо строки
+      formattedTime: formattedTime, // Готовая строка времени
       location: 'Almaty, Kazakhstan'
     });
     
   } catch (error) {
     console.error('Weather API error:', error);
     
-    // Создаем fallback timestamp
-    const fallbackTime = new Date().getTime();
+    // Создаем fallback время
+    const fallbackTime = new Date();
+    const fallbackAlmatyTime = new Date(fallbackTime.getTime() + (6 * 60 * 60 * 1000));
+    const fallbackFormatted = `${fallbackAlmatyTime.getDate()} ${['января', 'февраля', 'марта', 'апреля', 'мая', 'июня', 'июля', 'августа', 'сентября', 'октября', 'ноября', 'декабря'][fallbackAlmatyTime.getMonth()]} ${fallbackAlmatyTime.getHours().toString().padStart(2, '0')}:${fallbackAlmatyTime.getMinutes().toString().padStart(2, '0')}`;
     
     res.status(500).json({ 
       error: 'Failed to fetch weather data',
       message: error.message,
-      serverTimestamp: fallbackTime
+      formattedTime: fallbackFormatted
     });
   }
 }
