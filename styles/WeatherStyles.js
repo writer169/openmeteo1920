@@ -2,19 +2,17 @@
 
 export const weatherStyles = `
   .container {
-    height: 100vh;
-    height: 100svh; /* Small viewport height - учитывает адресную строку */
-    height: 100dvh; /* Dynamic viewport height - адаптируется к изменениям */
-    max-height: 100vh;
-    max-height: 100svh;
-    max-height: 100dvh;
+    height: calc(100vh - 4rem);
+    height: calc(100svh - 4rem); /* Small viewport height - учитывает адресную строку */
+    height: calc(100dvh - 4rem); /* Dynamic viewport height - адаптируется к изменениям */
     background: #e5e7eb;
     border-radius: 1rem;
-    padding: 1rem 0 3rem 0; /* Отступы сверху и снизу внутри серого контейнера */
+    padding: 0rem;
     display: flex;
     flex-direction: column;
     box-sizing: border-box;
     overflow: hidden; /* Предотвращаем переполнение контейнера */
+    margin: 1rem 0 3rem 0; /* Отступы снаружи: 1rem сверху, 3rem снизу */
   }
 
   .main {
@@ -23,7 +21,7 @@ export const weatherStyles = `
     flex: 1;
     display: flex;
     flex-direction: column;
-    padding: 0 0.5rem 0 0.5rem; /* Убрали вертикальные отступы, так как они теперь в container */
+    padding: 0.5rem;
     box-sizing: border-box;
     overflow-y: auto; /* Добавляем прокрутку если контент не влазит */
     min-height: 0; /* Позволяет flex-элементу сжиматься */
@@ -177,13 +175,16 @@ export const weatherStyles = `
 
   @media (max-width: 480px) {
     .container {
-      padding: 0.5rem 0 2.5rem 0; /* Меньше отступы на мобильных */
+      height: calc(100vh - 3rem);
+      height: calc(100svh - 3rem);
+      height: calc(100dvh - 3rem);
+      margin: 0.5rem 0 2.5rem 0; /* Меньше отступы на мобильных */
       border-radius: 0; /* Убираем скругления на мобильных для лучшего использования пространства */
     }
     
     .main {
       max-width: 100%;
-      padding: 0 0.25rem 0 0.25rem; /* Только боковые отступы */
+      padding: 0.25rem;
     }
 
     .header {
