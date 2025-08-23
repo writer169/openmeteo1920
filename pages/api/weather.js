@@ -1,38 +1,32 @@
 // pages/api/weather.js
 export default async function handler(req, res) {
   try {
-    // Получаем текущее время и создаем дату в часовом поясе Алматы
+    // Получаем текущее время в UTC+6 (Алматы)
     const now = new Date();
-    const almatyTime = new Intl.DateTimeFormat('en-CA', {
-      timeZone: 'Asia/Almaty',
-      year: 'numeric',
-      month: '2-digit',
-      day: '2-digit',
-      hour: '2-digit',
-      minute: '2-digit',
-      second: '2-digit',
-      hour12: false
-    }).formatToParts(now);
+    const almatyTime = new Date(now.getTime() + (5 * 60 * 60 * 1000));
     
-    // Собираем ISO строку вручную
-    const year = almatyTime.find(part => part.type === 'year').value;
-    const month = almatyTime.find(part => part.type === 'month').value;
-    const day = almatyTime.find(part => part.type === 'day').value;
-    const hour = almatyTime.find(part => part.type === 'hour').value;
-    const minute = almatyTime.find(part => part.type === 'minute').value;
-    const second = almatyTime.find(part => part.type === 'second').value;
+    // Форматируем время сразу на сервере
+    const day = almatyTime.getDate();
+    const monthNames = [
+      'января', 'февраля', 'марта', 'апреля', 'мая', 'июня',
+      'июля', 'августа', 'сентября', 'октября', 'ноября', 'декабря'
+    ];
+    const month = monthNames[almatyTime.getMonth()];
+    const hours = almatyTime.getHours().toString().padStart(2, '0');
+    const minutes = almatyTime.getMinutes().toString().padStart(2, '0');
     
-    const serverTime = `${year}-${month}-${day}T${hour}:${minute}:${second}+06:00`;
-    const today = `${year}-${month}-${day}`;
+    const formattedTime = `${day} ${month} ${hours}:${minutes}`;
+    const today = almatyTime.toISOString().split('T')[0]; // YYYY-MM-DD
+    
     // Создаем массив промисов для параллельного запроса данных
     const weatherPromises = [];
     
-    // Open-Meteo запрос
+    // Open-Meteo запрос с увеличенным таймаутом
     const openMeteoUrl = `https://api.open-meteo.com/v1/forecast?latitude=43.25&longitude=76.92&timezone=Asia/Almaty&start_hour=${today}T19:00&end_hour=${today}T19:00&minutely_15=temperature_2m,precipitation_probability,precipitation,weather_code&models=best_match,ecmwf_aifs025_single`;
     
     weatherPromises.push(
       fetch(openMeteoUrl, {
-        signal: AbortSignal.timeout(10000), // 10 секунд таймаут
+        signal: AbortSignal.timeout(20000), // 20 секунд таймаут
       }).then(response => {
         if (!response.ok) throw new Error(`Open-Meteo API error: ${response.status}`);
         return response.json();
@@ -42,14 +36,14 @@ export default async function handler(req, res) {
       })
     );
     
-    // Yandex запрос
+    // Yandex запрос с увеличенным таймаутом
     if (process.env.YANDEX_WEATHER_KEY && process.env.YANDEX_WEATHER_KEY !== 'YANDEX_KEY') {
       weatherPromises.push(
         fetch('https://api.weather.yandex.ru/v2/forecast?lat=43.23&lon=76.86', {
           headers: {
             'X-Yandex-Weather-Key': process.env.YANDEX_WEATHER_KEY
           },
-          signal: AbortSignal.timeout(10000),
+          signal: AbortSignal.timeout(20000), // 20 секунд таймаут
         }).then(response => {
           if (!response.ok) throw new Error(`Yandex API error: ${response.status}`);
           return response.json();
@@ -69,29 +63,32 @@ export default async function handler(req, res) {
     if (!openMeteoData && !yandexData) {
       return res.status(503).json({ 
         error: 'All weather services unavailable',
-        serverTime: serverTime
+        formattedTime: formattedTime
       });
     }
     
-    res.setHeader('Cache-Control', 'public, max-age=900'); // Кэш на 15 минут
+    // Устанавливаем заголовки кэширования
+    res.setHeader('Cache-Control', 'public, max-age=300, stale-while-revalidate=600'); // 5 минут кэш
     
     res.status(200).json({
       openMeteo: openMeteoData,
       yandex: yandexData,
-      serverTime: serverTime, // Время сервера в ISO формате с таймзоной
+      formattedTime: formattedTime, // Готовая строка времени
       location: 'Almaty, Kazakhstan'
     });
     
   } catch (error) {
     console.error('Weather API error:', error);
     
-    // Создаем fallback время в случае ошибки
-    const fallbackTime = new Date().toISOString();
+    // Создаем fallback время
+    const fallbackTime = new Date();
+    const fallbackAlmatyTime = new Date(fallbackTime.getTime() + (6 * 60 * 60 * 1000));
+    const fallbackFormatted = `${fallbackAlmatyTime.getDate()} ${['января', 'февраля', 'марта', 'апреля', 'мая', 'июня', 'июля', 'августа', 'сентября', 'октября', 'ноября', 'декабря'][fallbackAlmatyTime.getMonth()]} ${fallbackAlmatyTime.getHours().toString().padStart(2, '0')}:${fallbackAlmatyTime.getMinutes().toString().padStart(2, '0')}`;
     
     res.status(500).json({ 
       error: 'Failed to fetch weather data',
       message: error.message,
-      serverTime: fallbackTime
+      formattedTime: fallbackFormatted
     });
   }
 }
